@@ -17,7 +17,11 @@ export default async function handler(req, res) {
     });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    db: {
+      schema: 'copa_2026'
+    }
+  });
 
   try {
     // 1. Fetch all matches from Supabase

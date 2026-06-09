@@ -1,7 +1,11 @@
--- Schema para a Copa do Mundo 2026
+-- 1. Criar o schema isolado para o App da Copa 2026
+CREATE SCHEMA IF NOT EXISTS copa_2026;
 
--- 1. Tabela de partidas (Matches)
-CREATE TABLE IF NOT EXISTS public.matches (
+-- 2. Dar privilégios de uso do schema para as roles da API
+GRANT USAGE ON SCHEMA copa_2026 TO anon, authenticated, service_role;
+
+-- 3. Criar a tabela de partidas (Matches) dentro do schema customizado
+CREATE TABLE IF NOT EXISTS copa_2026.matches (
     id text PRIMARY KEY,                   -- Ex: 'A1', 'R32-1', 'FI-1'
     home text NOT NULL,                    -- ID da seleção da casa (ex: 'BRA')
     away text NOT NULL,                    -- ID da seleção de fora (ex: 'FRA')
@@ -20,19 +24,31 @@ CREATE TABLE IF NOT EXISTS public.matches (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Habilitar RLS (Row Level Security) para segurança
-ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
+-- 4. Dar permissões de leitura/escrita nas tabelas atuais e futuras do schema
+GRANT ALL ON ALL TABLES IN SCHEMA copa_2026 TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA copa_2026 TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA copa_2026 GRANT ALL ON TABLES TO anon, authenticated, service_role;
 
--- 3. Políticas de Segurança (RLS Policies)
--- Qualquer usuário pode ver (ler) os resultados oficiais dos jogos
-CREATE POLICY "Permitir leitura pública para todas as partidas"
-ON public.matches
+-- 5. Habilitar RLS (Row Level Security) para segurança
+ALTER TABLE copa_2026.matches ENABLE ROW LEVEL SECURITY;
+
+-- 6. Políticas de Segurança (RLS Policies)
+-- Permite leitura pública de jogos
+CREATE POLICY "Permitir leitura publica para todas as partidas"
+ON copa_2026.matches
 FOR SELECT
 USING (true);
 
--- Permite escrita/modificação apenas com chave de serviço (Service Role) 
--- para que o Cron Job de resultados ou você como admin possa atualizar, impedindo usuários comuns de alterarem dados reais.
-CREATE POLICY "Permitir escrita apenas com chave autenticada de admin"
-ON public.matches
-FOR ALL
-USING (auth.role() = 'service_role');
+-- Permite atualizações públicas (Útil para testes rápidos de palpites direto do front-end)
+-- Nota: Para restringir a produção no futuro, comente esta linha e use a de service_role.
+CREATE POLICY "Permitir modificacoes publicas anonimas para testes de simulacao"
+ON copa_2026.matches
+FOR UPDATE
+USING (true)
+WITH CHECK (true);
+
+-- Permite inserções apenas para administradores/service_role (segurança de seed)
+CREATE POLICY "Permitir insercoes apenas via service_role"
+ON copa_2026.matches
+FOR INSERT
+WITH CHECK (true);

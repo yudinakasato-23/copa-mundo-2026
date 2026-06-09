@@ -14,5 +14,9 @@ if (!isSupabaseConfigured) {
 }
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      db: {
+        schema: 'copa_2026' // Isolated schema for multi-app PostgreSQL consistency
+      }
+    })
   : null;
