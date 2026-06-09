@@ -16,15 +16,16 @@ import {
   CheckCircle,
   Clock,
   Sparkles,
-  Settings,
   X,
   Plus,
-  Minus
+  Minus,
+  Database
 } from 'lucide-react';
 
 import { SEDES_2026 } from './data/sedes';
 import { TEAM_RATINGS, INITIAL_GROUPS_DATA } from './data/teams';
 import { generateInitialMatches, getBrasiliaTime } from './data/matches';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("grupos"); // "grupos" | "matamata" | "estatisticas" | "sedes"
@@ -32,6 +33,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedGroup, setExpandedGroup] = useState("A");
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isDbSyncing, setIsDbSyncing] = useState(false);
   
   // State for active match editing in Bottom Sheet / Modal
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -74,6 +76,194 @@ export default function App() {
       });
     });
     return map;
+  }, []);
+
+  // Sync state to Supabase in batches (helper function)
+  const syncMatchesToSupabase = async (gMatches, kMatches) => {
+    if (!isSupabaseConfigured) return;
+    setIsDbSyncing(true);
+
+    const updates = [];
+
+    // Map group matches
+    Object.keys(gMatches).forEach(groupKey => {
+      gMatches[groupKey].forEach(m => {
+        updates.push({
+          id: m.id,
+          home: m.home,
+          away: m.away,
+          score_home: m.scoreHome === "" ? null : parseInt(m.scoreHome, 10),
+          score_away: m.scoreAway === "" ? null : parseInt(m.scoreAway, 10),
+          pen_home: null,
+          pen_away: null,
+          round: m.round,
+          date: m.date,
+          local_time: m.localTime,
+          estadio: m.estadio,
+          cidade: m.cidade,
+          fuso: m.fuso,
+          pais: m.pais,
+          bandeira: m.bandeira
+        });
+      });
+    });
+
+    // Map knockout matches
+    Object.keys(kMatches).forEach(stage => {
+      kMatches[stage].forEach(m => {
+        updates.push({
+          id: m.id,
+          home: m.home || "",
+          away: m.away || "",
+          score_home: m.scoreHome === "" ? null : parseInt(m.scoreHome, 10),
+          score_away: m.scoreAway === "" ? null : parseInt(m.scoreAway, 10),
+          pen_home: m.penHome === "" ? null : parseInt(m.penHome, 10),
+          pen_away: m.penAway === "" ? null : parseInt(m.penAway, 10),
+          round: stage === 'T3' ? 'Decisão de 3º Lugar' : stage === 'FI' ? 'Final' : stage,
+          date: m.date || 'A definir',
+          local_time: m.localTime || 'A definir',
+          estadio: m.estadio || 'A definir',
+          cidade: m.cidade || 'A definir',
+          fuso: m.fuso || 'UTC-5',
+          pais: m.pais || 'A definir',
+          bandeira: m.bandeira || '🏳️'
+        });
+      });
+    });
+
+    try {
+      const { error } = await supabase.from('matches').upsert(updates, { onConflict: 'id' });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erro ao sincronizar com o Supabase:", err.message);
+    } finally {
+      setIsDbSyncing(false);
+    }
+  };
+
+  // Seed initial matches in the Supabase database
+  const seedSupabaseDatabase = async () => {
+    setIsDbSyncing(true);
+    const initialGroups = generateInitialMatches();
+    const matchesToInsert = [];
+
+    // Group matches
+    Object.keys(initialGroups).forEach(groupKey => {
+      initialGroups[groupKey].forEach(m => {
+        matchesToInsert.push({
+          id: m.id,
+          home: m.home,
+          away: m.away,
+          score_home: null,
+          score_away: null,
+          pen_home: null,
+          pen_away: null,
+          round: m.round,
+          date: m.date,
+          local_time: m.localTime,
+          estadio: m.estadio,
+          cidade: m.cidade,
+          fuso: m.fuso,
+          pais: m.pais,
+          bandeira: m.bandeira
+        });
+      });
+    });
+
+    // Knockout phases
+    const stages = ['R32', 'R16', 'QF', 'SF', 'T3', 'FI'];
+    stages.forEach(stage => {
+      const count = stage === 'T3' || stage === 'FI' ? 1 : stage === 'SF' ? 2 : stage === 'QF' ? 4 : stage === 'R16' ? 8 : 16;
+      for (let i = 1; i <= count; i++) {
+        matchesToInsert.push({
+          id: `${stage}-${i}`,
+          home: '',
+          away: '',
+          score_home: null,
+          score_away: null,
+          pen_home: null,
+          pen_away: null,
+          round: stage === 'T3' ? 'Decisão de 3º Lugar' : stage === 'FI' ? 'Final' : stage,
+          date: 'A definir',
+          local_time: 'A definir',
+          estadio: 'A definir',
+          cidade: 'A definir',
+          fuso: 'UTC-5',
+          pais: 'A definir',
+          bandeira: '🏳️'
+        });
+      }
+    });
+
+    try {
+      const { error } = await supabase.from('matches').insert(matchesToInsert);
+      if (error) throw error;
+      console.log("Banco de dados Supabase inicializado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao popular dados iniciais do Supabase:", err.message);
+    } finally {
+      setIsDbSyncing(false);
+    }
+  };
+
+  // Load matches from Supabase on mount
+  useEffect(() => {
+    const loadMatches = async () => {
+      if (!isSupabaseConfigured) return;
+      setIsDbSyncing(true);
+      try {
+        const { data, error } = await supabase.from('matches').select('*');
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const loadedGroupMatches = generateInitialMatches();
+          const loadedKnockout = {
+            R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+            R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+            QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+            SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+            T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
+            FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+          };
+
+          data.forEach(m => {
+            const isKnockout = m.id.includes('-') || m.id.startsWith('T3') || m.id.startsWith('FI');
+            
+            if (isKnockout) {
+              const stage = m.id.split('-')[0];
+              const match = loadedKnockout[stage]?.find(x => x.id === m.id);
+              if (match) {
+                match.home = m.home || null;
+                match.away = m.away || null;
+                match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
+                match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
+                match.penHome = m.pen_home !== null ? m.pen_home.toString() : "";
+                match.penAway = m.pen_away !== null ? m.pen_away.toString() : "";
+              }
+            } else {
+              const groupKey = m.id.charAt(0);
+              const match = loadedGroupMatches[groupKey]?.find(x => x.id === m.id);
+              if (match) {
+                match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
+                match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
+              }
+            }
+          });
+
+          setGroupMatches(loadedGroupMatches);
+          setKnockoutMatches(loadedKnockout);
+        } else {
+          // Database is empty, let's seed it
+          await seedSupabaseDatabase();
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados do Supabase:", err.message);
+      } finally {
+        setIsDbSyncing(false);
+      }
+    };
+
+    loadMatches();
   }, []);
 
   // Group standings computation
@@ -132,7 +322,7 @@ export default function App() {
         team.sg = team.gp - team.gc;
       });
 
-      // Tiebreakers: 1. Points, 2. GD, 3. Goals Scored, 4. Head-to-Head (approximated here by team rating)
+      // Tiebreakers: 1. Points, 2. GD, 3. Goals Scored, 4. Rating
       standings[groupKey].sort((a, b) => {
         if (b.pts !== a.pts) return b.pts - a.pts;
         if (b.sg !== a.sg) return b.sg - a.sg;
@@ -354,12 +544,11 @@ export default function App() {
         };
       });
     });
-    setGroupMatches(simulated);
+    return simulated;
   };
 
-  // Simulate full knockout bracket sequentially
-  const simulateFullKnockout = (currentGroupMatches = groupMatches) => {
-    // 1. Recalculate group standings based on current scores
+  // Simulate full knockout bracket sequentially and returns state
+  const simulateFullKnockoutState = (currentGroupMatches) => {
     const standings = {};
     Object.keys(INITIAL_GROUPS_DATA).forEach(groupKey => {
       standings[groupKey] = INITIAL_GROUPS_DATA[groupKey].teams.map(team => ({
@@ -518,50 +707,50 @@ export default function App() {
       simFI = { ...simFI, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
     }
 
-    setKnockoutMatches({
+    return {
       R32: simR32,
       R16: simR16,
       QF: simQF,
       SF: simSF,
       T3: [simT3],
       FI: [simFI]
-    });
+    };
   };
 
-  // Simulates the entire tournament (groups + bracket) with a native loading delay for visuals
-  const simulateEntireTournament = () => {
+  // Simulates the entire tournament (groups + bracket) with database synchronization
+  const simulateEntireTournament = async () => {
     setIsSimulating(true);
-    simulateGroupStage();
+    const simulatedGroups = simulateGroupStage();
+    const simulatedKnockout = simulateFullKnockoutState(simulatedGroups);
     
-    // Smooth delay for state update and knockout calculations
-    setTimeout(() => {
-      setGroupMatches(prev => {
-        simulateFullKnockout(prev);
-        setIsSimulating(false);
-        return prev;
-      });
-    }, 600);
+    setGroupMatches(simulatedGroups);
+    setKnockoutMatches(simulatedKnockout);
+
+    if (isSupabaseConfigured) {
+      await syncMatchesToSupabase(simulatedGroups, simulatedKnockout);
+    }
+    
+    setIsSimulating(false);
   };
 
-  // Resets everything
-  const resetAll = () => {
-    setGroupMatches(generateInitialMatches());
-    setKnockoutMatches({
-      R32: Array.from({ length: 16 }, (_, i) => ({
-        id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
-      })),
-      R16: Array.from({ length: 8 }, (_, i) => ({
-        id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
-      })),
-      QF: Array.from({ length: 4 }, (_, i) => ({
-        id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
-      })),
-      SF: Array.from({ length: 2 }, (_, i) => ({
-        id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
-      })),
+  // Resets everything in memory and on Supabase
+  const resetAll = async () => {
+    const emptyGroups = generateInitialMatches();
+    const emptyKnockout = {
+      R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+      R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+      QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+      SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
       T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
       FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
-    });
+    };
+
+    setGroupMatches(emptyGroups);
+    setKnockoutMatches(emptyKnockout);
+
+    if (isSupabaseConfigured) {
+      await syncMatchesToSupabase(emptyGroups, emptyKnockout);
+    }
   };
 
   // Opens Bottom Sheet for match editing
@@ -573,33 +762,36 @@ export default function App() {
     setEditingPenAway(match.penAway || "");
   };
 
-  // Confirms match editing inside Bottom Sheet
-  const saveMatchScore = () => {
+  // Confirms match editing inside Bottom Sheet and saves to database
+  const saveMatchScore = async () => {
     if (!selectedMatch) return;
 
     const sh = editingScoreHome.trim();
     const sa = editingScoreAway.trim();
     
-    // Penealties are only valid if it's knockout AND scores are equal
     const isTie = sh !== "" && sa !== "" && parseInt(sh, 10) === parseInt(sa, 10);
     const ph = isTie ? editingPenHome.trim() : "";
     const pa = isTie ? editingPenAway.trim() : "";
 
+    let updatedGroups = { ...groupMatches };
+    let updatedKnockout = { ...knockoutMatches };
+
     if (selectedMatch.type === "group") {
-      setGroupMatches(prev => ({
-        ...prev,
-        [selectedMatch.groupKey]: prev[selectedMatch.groupKey].map(m => {
+      updatedGroups = {
+        ...groupMatches,
+        [selectedMatch.groupKey]: groupMatches[selectedMatch.groupKey].map(m => {
           if (m.id === selectedMatch.id) {
             return { ...m, scoreHome: sh, scoreAway: sa };
           }
           return m;
         })
-      }));
+      };
+      setGroupMatches(updatedGroups);
     } else {
-      const stage = selectedMatch.type; // e.g. R32, R16
-      setKnockoutMatches(prev => ({
-        ...prev,
-        [stage]: prev[stage].map(m => {
+      const stage = selectedMatch.type; 
+      updatedKnockout = {
+        ...knockoutMatches,
+        [stage]: knockoutMatches[stage].map(m => {
           if (m.id === selectedMatch.id) {
             return { 
               ...m, 
@@ -611,10 +803,52 @@ export default function App() {
           }
           return m;
         })
-      }));
+      };
+      setKnockoutMatches(updatedKnockout);
     }
 
     setSelectedMatch(null);
+
+    // Save to Supabase
+    if (isSupabaseConfigured) {
+      setIsDbSyncing(true);
+      try {
+        const scoreHomeVal = sh === "" ? null : parseInt(sh, 10);
+        const scoreAwayVal = sa === "" ? null : parseInt(sa, 10);
+        const penHomeVal = ph === "" ? null : parseInt(ph, 10);
+        const penAwayVal = pa === "" ? null : parseInt(pa, 10);
+
+        // Update match score
+        const { error } = await supabase
+          .from('matches')
+          .update({
+            score_home: scoreHomeVal,
+            score_away: scoreAwayVal,
+            pen_home: penHomeVal,
+            pen_away: penAwayVal,
+            home: selectedMatch.home || "",
+            away: selectedMatch.away || ""
+          })
+          .eq('id', selectedMatch.id);
+
+        if (error) throw error;
+
+        // If a group stage match changed, update all bracket dependencies dynamically in Supabase as well
+        if (selectedMatch.type === "group") {
+          // Re-simulate knockout propagation from local state updates and sync
+          const localKnockoutSync = simulateFullKnockoutState(updatedGroups);
+          await syncMatchesToSupabase(updatedGroups, localKnockoutSync);
+        } else {
+          // Update subsequent knockout phases
+          const localKnockoutSync = simulateFullKnockoutState(updatedGroups);
+          await syncMatchesToSupabase(updatedGroups, localKnockoutSync);
+        }
+      } catch (err) {
+        console.error("Erro ao salvar no Supabase:", err.message);
+      } finally {
+        setIsDbSyncing(false);
+      }
+    }
   };
 
   // Quick simulate single match
@@ -650,12 +884,10 @@ export default function App() {
     const currentIndex = groups.indexOf(expandedGroup);
 
     if (diff > 60) {
-      // Swiped left -> next group
       if (currentIndex < groups.length - 1) {
         setExpandedGroup(groups[currentIndex + 1]);
       }
     } else if (diff < -60) {
-      // Swiped right -> previous group
       if (currentIndex > 0) {
         setExpandedGroup(groups[currentIndex - 1]);
       }
@@ -684,7 +916,7 @@ export default function App() {
               const awayTeam = teamMap[match.away]?.name || match.away;
               biggestBlowout = {
                 diff,
-                text: `${homeTeam} ${sh} x ${sa} ${awayTeam}`
+                text: `${teamMap[match.home]?.flag || ""} ${homeTeam} ${sh} x ${sa} ${teamMap[match.away]?.flag || ""} ${awayTeam}`
               };
             }
 
@@ -710,7 +942,7 @@ export default function App() {
               const awayTeam = teamMap[match.away]?.name || match.away;
               biggestBlowout = {
                 diff,
-                text: `${homeTeam} ${sh} x ${sa} ${awayTeam}`
+                text: `${teamMap[match.home]?.flag || ""} ${homeTeam} ${sh} x ${sa} ${teamMap[match.away]?.flag || ""} ${awayTeam}`
               };
             }
 
@@ -744,7 +976,7 @@ export default function App() {
       biggestBlowout: biggestBlowout.text,
       topScoringTeam,
       champion,
-      progressPercent: Math.min(100, Math.round((matchesWithScore / 104) * 100)) // 104 games in 2026!
+      progressPercent: Math.min(100, Math.round((matchesWithScore / 104) * 100))
     };
   }, [groupMatches, knockoutMatches, teamMap]);
 
@@ -763,9 +995,12 @@ export default function App() {
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-yellow-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent">
                   COPA DO MUNDO 2026
                 </h1>
-                <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Live Sim
-                </span>
+                
+                {isSupabaseConfigured && (
+                  <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider">
+                    <Database className={`w-3 h-3 ${isDbSyncing ? 'animate-spin' : ''}`} /> Supabase Conectado
+                  </span>
+                )}
               </div>
               <p className="text-xs md:text-sm text-slate-400 mt-0.5 font-medium flex items-center gap-1.5">
                 <span>Canadá • México • Estados Unidos</span>
@@ -795,7 +1030,7 @@ export default function App() {
             <div className="flex gap-2 w-full sm:w-auto">
               <button 
                 onClick={simulateEntireTournament}
-                disabled={isSimulating}
+                disabled={isSimulating || isDbSyncing}
                 className="flex-1 sm:flex-initial bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm"
               >
                 {isSimulating ? (
@@ -810,7 +1045,8 @@ export default function App() {
               </button>
               <button 
                 onClick={resetAll}
-                className="bg-slate-900/80 hover:bg-slate-850 text-rose-400 hover:text-rose-300 border border-slate-800 hover:border-slate-750 font-bold p-3 rounded-xl transition duration-300 flex items-center justify-center cursor-pointer"
+                disabled={isDbSyncing}
+                className="bg-slate-900/80 hover:bg-slate-850 disabled:opacity-50 text-rose-400 hover:text-rose-300 border border-slate-800 hover:border-slate-750 font-bold p-3 rounded-xl transition duration-300 flex items-center justify-center cursor-pointer"
                 title="Reiniciar campeonato"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -916,8 +1152,8 @@ export default function App() {
                   <Info className="w-5 h-5 text-emerald-400" /> Classificação & Jogos
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Selecione um grupo. Toque em qualquer jogo para ver estádios, horários Brasília/local ou preencher resultados. 
-                  No celular, você também pode **deslizar para o lado (swipe)** nos jogos para mudar de grupo!
+                  Selecione um grupo. Toque em qualquer jogo para ver detalhes e editar. 
+                  No celular, você pode **deslizar para o lado (swipe)** nos jogos para mudar de grupo.
                 </p>
               </div>
               
@@ -1037,17 +1273,28 @@ export default function App() {
                       </div>
                       
                       <button 
-                        onClick={() => {
-                          setGroupMatches(prev => {
-                            const updatedMatches = { ...prev };
-                            updatedMatches[expandedGroup] = prev[expandedGroup].map(match => {
-                              const { sh, sa } = simulateMatchScore(match.home, match.away);
-                              return { ...match, scoreHome: sh.toString(), scoreAway: sa.toString() };
-                            });
-                            return updatedMatches;
+                        onClick={async () => {
+                          const updatedMatchesForThisGroup = groupMatches[expandedGroup].map(match => {
+                            const { sh, sa } = simulateMatchScore(match.home, match.away);
+                            return { ...match, scoreHome: sh.toString(), scoreAway: sa.toString() };
                           });
+
+                          const newGroupMatchesState = {
+                            ...groupMatches,
+                            [expandedGroup]: updatedMatchesForThisGroup
+                          };
+
+                          const localKnockoutSync = simulateFullKnockoutState(newGroupMatchesState);
+
+                          setGroupMatches(newGroupMatchesState);
+                          setKnockoutMatches(localKnockoutSync);
+
+                          if (isSupabaseConfigured) {
+                            await syncMatchesToSupabase(newGroupMatchesState, localKnockoutSync);
+                          }
                         }}
-                        className="bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2 px-3.5 rounded-xl transition cursor-pointer"
+                        disabled={isDbSyncing}
+                        className="bg-slate-900 hover:bg-slate-850 disabled:opacity-50 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2 px-3.5 rounded-xl transition cursor-pointer"
                       >
                         Simular Grupo
                       </button>
@@ -1156,8 +1403,8 @@ export default function App() {
                               
                               {/* Scoreline */}
                               <div className="flex justify-between items-center gap-3 py-1.5">
-                                <div className="flex items-center gap-2 max-w-[40%] truncate">
-                                  <span className="text-xl leading-none">{homeTeam.flag}</span>
+                                <div className="flex items-center gap-2 max-w-[42%] truncate">
+                                  <span className="text-xl leading-none shrink-0">{homeTeam.flag}</span>
                                   <span className="font-bold text-xs text-slate-100 truncate">{homeTeam.name}</span>
                                 </div>
                                 
@@ -1173,9 +1420,9 @@ export default function App() {
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-2 max-w-[40%] truncate justify-end">
+                                <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
                                   <span className="font-bold text-xs text-slate-100 truncate">{awayTeam.name}</span>
-                                  <span className="text-xl leading-none">{awayTeam.flag}</span>
+                                  <span className="text-xl leading-none shrink-0">{awayTeam.flag}</span>
                                 </div>
                               </div>
                               
@@ -1222,12 +1469,14 @@ export default function App() {
               </div>
               
               <button 
-                onClick={() => {
-                  setGroupMatches(prev => {
-                    simulateFullKnockout(prev);
-                    return prev;
-                  });
+                onClick={async () => {
+                  const localKnockoutSync = simulateFullKnockoutState(groupMatches);
+                  setKnockoutMatches(localKnockoutSync);
+                  if (isSupabaseConfigured) {
+                    await syncMatchesToSupabase(groupMatches, localKnockoutSync);
+                  }
                 }}
+                disabled={isDbSyncing}
                 className="w-full md:w-auto bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2 px-3.5 rounded-xl transition cursor-pointer"
               >
                 Simular Só Mata-Mata
@@ -1405,7 +1654,7 @@ export default function App() {
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
                   <p className="text-xs text-slate-400 uppercase tracking-wider">Maior Goleada</p>
-                  <p className="text-xs font-bold text-slate-200 mt-2 truncate" title={stats.biggestBlowout}>
+                  <p className="text-xs font-bold text-slate-200 mt-2 truncate" title={stats.biggestBlowout.replace(/<[^>]*>/g, '')}>
                     {stats.biggestBlowout}
                   </p>
                 </div>
@@ -1747,13 +1996,15 @@ export default function App() {
                 <div className="flex gap-2.5 pt-3">
                   <button 
                     onClick={simulateSingleMatchInSheet}
-                    className="flex-1 bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 font-bold py-3 px-4 rounded-xl transition duration-200 cursor-pointer flex items-center justify-center gap-2 text-xs"
+                    disabled={isDbSyncing}
+                    className="flex-1 bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 font-bold py-3 px-4 rounded-xl transition duration-200 cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Simular Jogo
                   </button>
                   <button 
                     onClick={saveMatchScore}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-3 px-4 rounded-xl transition duration-200 cursor-pointer text-xs"
+                    disabled={isDbSyncing}
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-3 px-4 rounded-xl transition duration-200 cursor-pointer text-xs disabled:opacity-50"
                   >
                     Confirmar
                   </button>
@@ -1796,7 +2047,7 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
   return (
     <div 
       onClick={onClick}
-      className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-center text-xs group shadow"
+      className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-center text-xs group shadow animate-fade-in"
     >
       <div className="flex justify-between items-center text-[8.5px] text-slate-500 border-b border-slate-950 pb-1.5 mb-2.5">
         <span className="font-bold">{match.id}</span>
@@ -1806,10 +2057,10 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
       <div className="space-y-2">
         {/* Home */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-1.5 max-w-[75%] truncate">
+          <div className="flex items-center gap-1.5 max-w-[78%] truncate">
             {home ? (
               <>
-                <span className="text-base leading-none">{home.flag}</span>
+                <span className="text-base leading-none shrink-0">{home.flag}</span>
                 <span className={`font-bold truncate ${homeWinner ? "text-emerald-400 font-extrabold" : hasPlayed ? "text-slate-400" : "text-slate-200"}`}>
                   {home.name}
                 </span>
@@ -1833,10 +2084,10 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
 
         {/* Away */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-1.5 max-w-[75%] truncate">
+          <div className="flex items-center gap-1.5 max-w-[78%] truncate">
             {away ? (
               <>
-                <span className="text-base leading-none">{away.flag}</span>
+                <span className="text-base leading-none shrink-0">{away.flag}</span>
                 <span className={`font-bold truncate ${awayWinner ? "text-emerald-400 font-extrabold" : hasPlayed ? "text-slate-400" : "text-slate-200"}`}>
                   {away.name}
                 </span>
@@ -1861,7 +2112,7 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
       
       {/* Edit overlay prompt */}
       {!home || !away ? (
-        <div className="text-[8px] text-slate-600 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between">
+        <div className="text-[8px] text-slate-650 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between">
           <span>Aguardando confrontos</span>
         </div>
       ) : !hasPlayed ? (
