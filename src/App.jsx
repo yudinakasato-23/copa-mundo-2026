@@ -1557,30 +1557,30 @@ export default function App() {
                           : "bg-slate-900/30 border-slate-900 hover:border-slate-800 hover:bg-slate-900/50"
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-2.5">
-                        <span className="font-extrabold text-slate-200 text-sm tracking-wide">Grupo {groupKey}</span>
-                        <span className="text-[9px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded-full border border-slate-900">
-                          {isExpanded ? "Visualizando" : "Selecionar"}
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="font-extrabold text-slate-200 text-base md:text-lg tracking-wide">Grupo {groupKey}</span>
+                        <span className="text-xs text-slate-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-900 font-bold uppercase tracking-wider text-[10px]">
+                          {isExpanded ? "Ativo" : "Ver Grupo"}
                         </span>
                       </div>
                       
                       {/* Mini standings list */}
-                      <div className="space-y-1 text-[11px]">
+                      <div className="space-y-1.5 text-xs md:text-sm">
                         {standings.map((team, idx) => (
                           <div 
                             key={team.id} 
-                            className={`flex items-center justify-between p-1 rounded ${
-                              idx < 2 ? "bg-emerald-500/5 text-slate-200" : "text-slate-400"
+                            className={`flex items-center justify-between p-1.5 rounded transition ${
+                              idx < 2 ? "bg-emerald-500/[0.03] text-slate-250" : "text-slate-400 hover:text-slate-350"
                             }`}
                           >
-                            <span className="flex items-center gap-1.5 truncate max-w-[160px]">
-                              <span className="font-mono text-[9px] text-slate-500 w-3">{idx + 1}º</span>
-                              <TeamFlag teamId={team.id} />
-                              <span className="font-medium truncate">{team.name}</span>
+                            <span className="flex items-center gap-2 truncate max-w-[190px]">
+                              <span className="font-mono text-xs text-slate-500 w-4 shrink-0">{idx + 1}º</span>
+                              <TeamFlag teamId={team.id} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+                              <span className="font-bold truncate text-slate-100">{team.name}</span>
                             </span>
-                            <div className="flex items-center gap-2 font-bold text-[10px]">
-                              <span className="text-slate-500 font-normal">S:{team.sg >= 0 ? `+${team.sg}` : team.sg}</span>
-                              <span className={idx < 2 ? "text-emerald-400" : "text-slate-300"}>{team.pts} pts</span>
+                            <div className="flex items-center gap-2.5 font-bold text-xs md:text-sm shrink-0">
+                              <span className="text-slate-500 font-medium font-mono text-[11px] md:text-xs">Saldo: {team.sg >= 0 ? `+${team.sg}` : team.sg}</span>
+                              <span className={`font-extrabold ${idx < 2 ? "text-emerald-400" : "text-slate-300"}`}>{team.pts} pts</span>
                             </div>
                           </div>
                         ))}
@@ -1747,9 +1747,9 @@ export default function App() {
                                         isQualifying ? "bg-emerald-500/[0.005]" : ""
                                       }`}
                                     >
-                                      <td className="py-2 pl-1 font-medium">
+                                      <td className="py-2.5 pl-1 font-medium">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className={`w-0.5 h-4 rounded-full shrink-0 ${
+                                          <span className={`w-0.5 h-4.5 rounded-full shrink-0 ${
                                             isQualifying 
                                               ? "bg-emerald-500" 
                                               : isBestThirdCandidate 
@@ -1757,15 +1757,15 @@ export default function App() {
                                                 : "bg-transparent"
                                           }`}></span>
                                           <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
-                                          <TeamFlag teamId={team.id} />
+                                          <TeamFlag teamId={team.id} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
                                           <span className="font-bold text-slate-100 truncate max-w-[130px]">{team.name}</span>
                                         </div>
                                       </td>
-                                      <td className="py-2 text-center font-mono text-slate-300">{team.j}</td>
-                                      <td className={`py-2 text-center font-mono font-bold ${
+                                      <td className="py-2.5 text-center font-mono text-slate-350 text-xs md:text-sm">{team.j}</td>
+                                      <td className={`py-2.5 text-center font-mono font-bold text-xs md:text-sm ${
                                         team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-400"
                                       }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
-                                      <td className={`py-2 text-center font-extrabold pr-1 font-mono text-sm ${
+                                      <td className={`py-2.5 text-center font-extrabold pr-1 font-mono text-sm md:text-base ${
                                         isQualifying ? "text-emerald-400" : "text-slate-200"
                                       }`}>{team.pts}</td>
                                     </tr>
@@ -1775,17 +1775,13 @@ export default function App() {
                             </table>
                           </div>
 
-                          {/* BACK: Detailed Stats Table (Seleção | V | E | D | GP | GC) */}
-                          <div className="flip-card-back absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
+                          <div className="flip-card-back absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3.5 shadow-inner flex flex-col justify-between">
                             <table className="w-full text-left text-xs md:text-sm text-slate-300">
                               <thead>
-                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
-                                  <th className="py-1.5 pl-1">Seleção</th>
-                                  <th className="py-1.5 text-center w-8 cursor-help" title="Vitórias">V</th>
-                                  <th className="py-1.5 text-center w-8 cursor-help" title="Empates">E</th>
-                                  <th className="py-1.5 text-center w-8 cursor-help" title="Derrotas">D</th>
-                                  <th className="py-1.5 text-center w-9 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
-                                  <th className="py-1.5 text-center pr-1 w-9 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
+                                <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs">
+                                  <th className="py-2 pl-1">Seleção</th>
+                                  <th className="py-2 text-center w-24 cursor-help" title="Vitórias - Empates - Derrotas">V-E-D</th>
+                                  <th className="py-2 text-center pr-1 w-28 cursor-help" title="Gols Marcados - Gols Sofridos (GP-GC)">Gols (Marc:Sofr)</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-900/20">
@@ -1799,9 +1795,9 @@ export default function App() {
                                         isQualifying ? "bg-emerald-500/[0.005]" : ""
                                       }`}
                                     >
-                                      <td className="py-2 pl-1 font-medium">
+                                      <td className="py-2.5 pl-1 font-medium">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className={`w-0.5 h-4 rounded-full shrink-0 ${
+                                          <span className={`w-0.5 h-4.5 rounded-full shrink-0 ${
                                             isQualifying 
                                               ? "bg-emerald-500" 
                                               : isBestThirdCandidate 
@@ -1809,15 +1805,18 @@ export default function App() {
                                                 : "bg-transparent"
                                           }`}></span>
                                           <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
-                                          <TeamFlag teamId={team.id} />
-                                          <span className="font-bold text-slate-100 truncate max-w-[100px]">{team.name}</span>
+                                          <TeamFlag teamId={team.id} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+                                          <span className="font-bold text-slate-100 truncate max-w-[110px] md:max-w-[130px]">{team.name}</span>
                                         </div>
                                       </td>
-                                      <td className="py-2 text-center font-mono text-slate-400">{team.v}</td>
-                                      <td className="py-2 text-center font-mono text-slate-400">{team.e}</td>
-                                      <td className="py-2 text-center font-mono text-slate-400">{team.d}</td>
-                                      <td className="py-2 text-center font-mono text-emerald-500/80">{team.gp}</td>
-                                      <td className="py-2 text-center pr-1 font-mono text-rose-500/80">{team.gc}</td>
+                                      <td className="py-2.5 text-center font-mono text-slate-300 font-bold text-xs md:text-sm">
+                                        {team.v}-{team.e}-{team.d}
+                                      </td>
+                                      <td className="py-2.5 text-center pr-1 font-mono text-xs md:text-sm">
+                                        <span className="text-emerald-450 font-bold">{team.gp}</span>
+                                        <span className="text-slate-600 font-semibold px-0.5">:</span>
+                                        <span className="text-rose-450 font-bold">{team.gc}</span>
+                                      </td>
                                     </tr>
                                   );
                                 })}
