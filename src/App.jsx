@@ -1851,20 +1851,7 @@ export default function App() {
                 <RotateCcw className="w-4 h-4" />
               </button>
 
-              {isSupabaseConfigured && (
-                <button
-                  onClick={toggleAdminMode}
-                  disabled={isDbSyncing}
-                  className={`p-3 rounded-xl border transition duration-300 flex items-center justify-center cursor-pointer ${
-                    isAdminMode 
-                      ? "bg-red-500/20 border-red-500/45 text-red-400 hover:bg-red-500/30" 
-                      : "bg-slate-900/80 hover:bg-slate-850 border-slate-800 hover:border-slate-750 text-slate-400 hover:text-slate-200"
-                  }`}
-                  title={isAdminMode ? "Desativar modo editor" : "Ativar modo editor (Admin)"}
-                >
-                  <Database className={`w-4 h-4 ${isDbSyncing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
+
             </div>
           </div>
         </div>
@@ -1996,7 +1983,6 @@ export default function App() {
               <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 <span>⚽ RESULTADOS OFICIAIS DA COPA</span>
-                {isSupabaseConfigured && <span className="text-[9px] text-slate-500 font-medium">(Conectado ao banco Supabase)</span>}
               </div>
               <span className="text-[10px] text-slate-500 font-medium">
                 Edite qualquer placar para entrar no modo de simulação pessoal
