@@ -289,6 +289,17 @@ export default function App() {
   const matchSwipe = useSwipeToClose(!!selectedMatch, () => setSelectedMatch(null));
   const teamSwipe = useSwipeToClose(!!selectedTeam, () => setSelectedTeam(null));
 
+  // Lock body scroll when a modal is open to prevent background page from scrolling
+  useEffect(() => {
+    if (selectedMatch || selectedTeam) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [selectedMatch, selectedTeam]);
+
   const handleMobileKoScroll = () => {
     if (isScrollingProgrammatically) return;
     const container = mobileKoScrollContainerRef.current;
@@ -2472,7 +2483,7 @@ export default function App() {
           {/* Sheet container */}
           <div 
             ref={matchSwipe.containerRef}
-            className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-6 flex flex-col gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar"
+            className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-6 flex flex-col gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar overscroll-contain"
             style={{
               transform: `translateY(${matchSwipe.dragY}px)`,
               transition: matchSwipe.isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.94, 0.6, 1)'
@@ -2756,7 +2767,7 @@ export default function App() {
               </div>
 
               {/* Content */}
-              <div className="p-6 overflow-y-auto space-y-6 no-scrollbar">
+              <div className="p-6 overflow-y-auto space-y-6 no-scrollbar overscroll-contain">
                 {/* Coach & Simulator Rating */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-950/45 p-3.5 rounded-xl border border-slate-900/60">
