@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 import { SEDES_2026 } from './data/sedes';
-import { TEAM_RATINGS, INITIAL_GROUPS_DATA } from './data/teams';
+import { TEAM_RATINGS, INITIAL_GROUPS_DATA, TEAM_PLAYERS } from './data/teams';
 import { generateInitialMatches, getBrasiliaTime } from './data/matches';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
@@ -121,6 +121,78 @@ export default function App() {
 
   // Active knockout phase selection for mobile swipe layout
   const [activeKnockoutPhase, setActiveKnockoutPhase] = useState("R32");
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const mobileKoScrollContainerRef = useRef(null);
+  const [isScrollingProgrammatically, setIsScrollingProgrammatically] = useState(false);
+
+  const handleMobileKoScroll = () => {
+    if (isScrollingProgrammatically) return;
+    const container = mobileKoScrollContainerRef.current;
+    if (!container) return;
+
+    const scrollLeft = container.scrollLeft;
+    const containerWidth = container.clientWidth;
+    if (containerWidth === 0) return;
+
+    const index = Math.round(scrollLeft / containerWidth);
+    const phases = ["R32", "R16", "QF", "SF", "FI"];
+    if (index >= 0 && index < phases.length) {
+      const currentPhase = phases[index];
+      if (activeKnockoutPhase !== currentPhase) {
+        setActiveKnockoutPhase(currentPhase);
+        
+        // Also scroll the mobile tab buttons to keep the active one in view
+        if (koScrollRef.current) {
+          const tabButton = koScrollRef.current.children[index];
+          if (tabButton) {
+            tabButton.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center"
+            });
+          }
+        }
+      }
+    }
+  };
+
+  const scrollToKoColumn = (phaseId) => {
+    setActiveKnockoutPhase(phaseId);
+    const container = mobileKoScrollContainerRef.current;
+    if (!container) return;
+
+    const phases = ["R32", "R16", "QF", "SF", "FI"];
+    const index = phases.indexOf(phaseId);
+    if (index !== -1) {
+      setIsScrollingProgrammatically(true);
+      const containerWidth = container.clientWidth;
+      container.scrollTo({
+        left: index * containerWidth,
+        behavior: "smooth"
+      });
+      
+      // Reset the block flag after the animation completes
+      setTimeout(() => {
+        setIsScrollingProgrammatically(false);
+      }, 450);
+    }
+  };
+
+  // Sync scroll position of knockout container when tab activeTab or activeKnockoutPhase changes
+  useEffect(() => {
+    if (activeTab === "matamata" && mobileKoScrollContainerRef.current) {
+      const phases = ["R32", "R16", "QF", "SF", "FI"];
+      const index = phases.indexOf(activeKnockoutPhase);
+      if (index !== -1) {
+        setTimeout(() => {
+          const container = mobileKoScrollContainerRef.current;
+          if (container) {
+            container.scrollLeft = index * container.clientWidth;
+          }
+        }, 50);
+      }
+    }
+  }, [activeTab]);
 
   // Knockout stage matches structure
   const [knockoutMatches, setKnockoutMatches] = useState({
@@ -140,12 +212,11 @@ export default function App() {
     FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
   });
 
-  // Team mapping cache
   const teamMap = useMemo(() => {
     const map = {};
-    Object.values(INITIAL_GROUPS_DATA).forEach(group => {
+    Object.entries(INITIAL_GROUPS_DATA).forEach(([groupKey, group]) => {
       group.teams.forEach(team => {
-        map[team.id] = team;
+        map[team.id] = { ...team, groupKey };
       });
     });
     return map;
@@ -1646,22 +1717,27 @@ export default function App() {
                     </div>
 
                     {/* Table of Standings */}
-                    {/* Desktop View: Full Standings Table */}
-                    <div className="hidden lg:block space-y-2">
-                      <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">Classificação</p>
-                      <div className="overflow-x-auto no-scrollbar bg-slate-950/40 rounded-xl border border-slate-900 p-2">
-                        <table className="w-full text-left text-xs md:text-sm text-slate-300">
+                    <div className="space-y-2">
+                      <p className="text-xs md:text-sm font-bold text-slate-450 uppercase tracking-wider pl-1 flex items-center justify-between">
+                        <span>Classificação</span>
+                        <span className="text-[10px] md:text-xs text-slate-500 font-medium normal-case font-mono">
+                          (Clique na seleção para ver escalação/estrelas)
+                        </span>
+                      </p>
+                      
+                      <div className="overflow-x-auto no-scrollbar bg-slate-950 rounded-xl border border-slate-900 relative">
+                        <table className="w-full text-left text-xs md:text-sm text-slate-350 min-w-[620px] lg:min-w-0 border-collapse">
                           <thead>
-                            <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs">
-                              <th className="py-2 pl-2">Seleção</th>
-                              <th className="py-2 text-center w-8 cursor-help" title="Jogos (Partidas jogadas)">J</th>
-                              <th className="py-2 text-center w-8 cursor-help" title="Vitórias">V</th>
-                              <th className="py-2 text-center w-8 cursor-help" title="Empates">E</th>
-                              <th className="py-2 text-center w-8 cursor-help" title="Derrotas">D</th>
-                              <th className="py-2 text-center w-10 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
-                              <th className="py-2 text-center w-10 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
-                              <th className="py-2 text-center w-10 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
-                              <th className="py-2 text-center pr-2 w-12 font-bold text-slate-400 cursor-help" title="Pontos">PTS</th>
+                            <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs select-none">
+                              <th className="py-3 pl-3 pr-2 sticky left-0 z-20 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]">Seleção</th>
+                              <th className="py-3 text-center w-12 font-extrabold text-emerald-450 cursor-help" title="Pontos">PTS</th>
+                              <th className="py-3 text-center w-10 font-bold text-slate-300 cursor-help" title="Jogos (Partidas jogadas)">J</th>
+                              <th className="py-3 text-center w-10 cursor-help" title="Vitórias">V</th>
+                              <th className="py-3 text-center w-10 cursor-help" title="Empates">E</th>
+                              <th className="py-3 text-center w-10 cursor-help" title="Derrotas">D</th>
+                              <th className="py-3 text-center w-12 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
+                              <th className="py-3 text-center w-12 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
+                              <th className="py-3 text-center w-12 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900/30">
@@ -1672,10 +1748,10 @@ export default function App() {
                                 <tr 
                                   key={team.id}
                                   className={`hover:bg-slate-900/30 transition duration-150 ${
-                                    isQualifying ? "bg-emerald-500/[0.01]" : ""
+                                    isQualifying ? "bg-emerald-500/[0.005]" : ""
                                   }`}
                                 >
-                                  <td className="py-2.5 pl-2 font-medium">
+                                  <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]">
                                     <div className="flex items-center gap-2 min-w-0">
                                       <span className={`w-1 h-5 rounded-full shrink-0 ${
                                         isQualifying 
@@ -1686,145 +1762,31 @@ export default function App() {
                                       }`}></span>
                                       <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
                                       <TeamFlag teamId={team.id} />
-                                      <span className="font-bold text-slate-100 truncate">{team.name}</span>
+                                      <button 
+                                        onClick={() => setSelectedTeam(team.id)}
+                                        className="font-bold text-slate-100 hover:text-emerald-400 transition-colors text-left truncate cursor-pointer focus:outline-hidden"
+                                      >
+                                        {team.name}
+                                      </button>
                                     </div>
                                   </td>
-                                  <td className="py-2.5 text-center font-mono">{team.j}</td>
-                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.v}</td>
-                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.e}</td>
-                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.d}</td>
-                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.gp}</td>
-                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.gc}</td>
-                                  <td className={`py-2.5 text-center font-mono font-bold ${
-                                    team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-400"
-                                  }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
-                                  <td className={`py-2.5 text-center font-extrabold pr-2 font-mono text-sm ${
-                                    isQualifying ? "text-emerald-400" : "text-slate-200"
+                                  <td className={`py-3.5 text-center font-extrabold font-mono text-sm md:text-base ${
+                                    isQualifying ? "text-emerald-450" : "text-slate-200"
                                   }`}>{team.pts}</td>
+                                  <td className="py-3.5 text-center font-mono font-semibold text-slate-300">{team.j}</td>
+                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.v}</td>
+                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.e}</td>
+                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.d}</td>
+                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.gp}</td>
+                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.gc}</td>
+                                  <td className={`py-3.5 text-center font-mono font-bold ${
+                                    team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-450"
+                                  }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
                                 </tr>
                               );
                             })}
                           </tbody>
                         </table>
-                      </div>
-                    </div>
-
-                    {/* Mobile/Tablet View: Interactive 3D Flip Card Standings */}
-                    <div className="lg:hidden space-y-2.5">
-                      <div className="flex justify-between items-center pl-1">
-                        <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Classificação</p>
-                        <button 
-                          onClick={() => setIsTableFlipped(!isTableFlipped)}
-                          className="text-[10px] md:text-xs font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5 text-emerald-500" />
-                          {isTableFlipped ? "Ver Classificação Geral" : "Ver Estatísticas Completas"}
-                        </button>
-                      </div>
-
-                      <div className={`flip-card w-full ${isTableFlipped ? 'flipped' : ''}`}>
-                        <div className="flip-card-inner relative w-full h-[174px]">
-                          
-                          {/* FRONT: Simplified Table (Seleção | J | SG | PTS) */}
-                          <div className="flip-card-front absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
-                            <table className="w-full text-left text-xs md:text-sm text-slate-300">
-                              <thead>
-                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
-                                  <th className="py-1.5 pl-1">Seleção</th>
-                                  <th className="py-1.5 text-center w-10 cursor-help" title="Jogos (Partidas jogadas)">J</th>
-                                  <th className="py-1.5 text-center w-12 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
-                                  <th className="py-1.5 text-center pr-1 w-14 font-bold text-slate-400 cursor-help" title="Pontos">PTS</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-900/20">
-                                {groupStandings[expandedGroup].map((team, idx) => {
-                                  const isQualifying = idx < 2;
-                                  const isBestThirdCandidate = idx === 2;
-                                  return (
-                                    <tr 
-                                      key={team.id}
-                                      className={`hover:bg-slate-900/20 transition duration-150 ${
-                                        isQualifying ? "bg-emerald-500/[0.005]" : ""
-                                      }`}
-                                    >
-                                      <td className="py-2.5 pl-1 font-medium">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className={`w-0.5 h-4.5 rounded-full shrink-0 ${
-                                            isQualifying 
-                                              ? "bg-emerald-500" 
-                                              : isBestThirdCandidate 
-                                                ? "bg-yellow-500/40" 
-                                                : "bg-transparent"
-                                          }`}></span>
-                                          <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
-                                          <TeamFlag teamId={team.id} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
-                                          <span className="font-bold text-slate-100 truncate max-w-[130px]">{team.name}</span>
-                                        </div>
-                                      </td>
-                                      <td className="py-2.5 text-center font-mono text-slate-350 text-xs md:text-sm">{team.j}</td>
-                                      <td className={`py-2.5 text-center font-mono font-bold text-xs md:text-sm ${
-                                        team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-400"
-                                      }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
-                                      <td className={`py-2.5 text-center font-extrabold pr-1 font-mono text-sm md:text-base ${
-                                        isQualifying ? "text-emerald-400" : "text-slate-200"
-                                      }`}>{team.pts}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          <div className="flip-card-back absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3.5 shadow-inner flex flex-col justify-between">
-                            <table className="w-full text-left text-xs md:text-sm text-slate-300">
-                              <thead>
-                                <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs">
-                                  <th className="py-2 pl-1">Seleção</th>
-                                  <th className="py-2 text-center w-24 cursor-help" title="Vitórias - Empates - Derrotas">V-E-D</th>
-                                  <th className="py-2 text-center pr-1 w-28 cursor-help" title="Gols Marcados - Gols Sofridos (GP-GC)">Gols (Marc:Sofr)</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-900/20">
-                                {groupStandings[expandedGroup].map((team, idx) => {
-                                  const isQualifying = idx < 2;
-                                  const isBestThirdCandidate = idx === 2;
-                                  return (
-                                    <tr 
-                                      key={team.id}
-                                      className={`hover:bg-slate-900/20 transition duration-150 ${
-                                        isQualifying ? "bg-emerald-500/[0.005]" : ""
-                                      }`}
-                                    >
-                                      <td className="py-2.5 pl-1 font-medium">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className={`w-0.5 h-4.5 rounded-full shrink-0 ${
-                                            isQualifying 
-                                              ? "bg-emerald-500" 
-                                              : isBestThirdCandidate 
-                                                ? "bg-yellow-500/40" 
-                                                : "bg-transparent"
-                                          }`}></span>
-                                          <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
-                                          <TeamFlag teamId={team.id} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
-                                          <span className="font-bold text-slate-100 truncate max-w-[110px] md:max-w-[130px]">{team.name}</span>
-                                        </div>
-                                      </td>
-                                      <td className="py-2.5 text-center font-mono text-slate-300 font-bold text-xs md:text-sm">
-                                        {team.v}-{team.e}-{team.d}
-                                      </td>
-                                      <td className="py-2.5 text-center pr-1 font-mono text-xs md:text-sm">
-                                        <span className="text-emerald-450 font-bold">{team.gp}</span>
-                                        <span className="text-slate-600 font-semibold px-0.5">:</span>
-                                        <span className="text-rose-450 font-bold">{team.gc}</span>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                        </div>
                       </div>
                     </div>
 
@@ -1994,7 +1956,7 @@ export default function App() {
                   ].map(phase => (
                     <button
                       key={phase.id}
-                      onClick={() => setActiveKnockoutPhase(phase.id)}
+                      onClick={() => scrollToKoColumn(phase.id)}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
                         activeKnockoutPhase === phase.id 
                           ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
@@ -2082,56 +2044,84 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Mobile View: Render only the active phase */}
-              <div className="lg:hidden space-y-3">
-                {activeKnockoutPhase === "R32" && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-400 font-medium pb-1">Confrontos dos 32-avos:</p>
-                    {knockoutMatches.R32.map((match) => (
-                      <KnockoutMatchCard key={match.id} match={match} stage="R32" teamMap={teamMap} onClick={() => openEditMatch(match, "R32")} />
-                    ))}
-                  </div>
-                )}
-                {activeKnockoutPhase === "R16" && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-400 font-medium pb-1">Confrontos das Oitavas de Final:</p>
-                    {knockoutMatches.R16.map((match) => (
-                      <KnockoutMatchCard key={match.id} match={match} stage="R16" teamMap={teamMap} onClick={() => openEditMatch(match, "R16")} />
-                    ))}
-                  </div>
-                )}
-                {activeKnockoutPhase === "QF" && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-400 font-medium pb-1">Confrontos das Quartas de Final:</p>
-                    {knockoutMatches.QF.map((match) => (
-                      <KnockoutMatchCard key={match.id} match={match} stage="QF" teamMap={teamMap} onClick={() => openEditMatch(match, "QF")} />
-                    ))}
-                  </div>
-                )}
-                {activeKnockoutPhase === "SF" && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-400 font-medium pb-1">Confrontos das Semifinais:</p>
-                    {knockoutMatches.SF.map((match) => (
-                      <KnockoutMatchCard key={match.id} match={match} stage="SF" teamMap={teamMap} onClick={() => openEditMatch(match, "SF")} />
-                    ))}
-                  </div>
-                )}
-                {activeKnockoutPhase === "FI" && (
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs text-emerald-400 font-bold uppercase pb-1 border-b border-emerald-500/20 mb-2">Decisão do Campeão (Final)</p>
-                      {knockoutMatches.FI.map((match) => (
-                        <KnockoutMatchCard key={match.id} match={match} stage="FI" teamMap={teamMap} onClick={() => openEditMatch(match, "FI")} />
-                      ))}
-                    </div>
-                    <div className="pt-2">
-                      <p className="text-xs text-slate-400 font-bold uppercase pb-1 border-b border-slate-800 mb-2">Decisão de Terceiro Lugar</p>
-                      {knockoutMatches.T3.map((match) => (
-                        <KnockoutMatchCard key={match.id} match={match} stage="T3" teamMap={teamMap} onClick={() => openEditMatch(match, "T3")} />
-                      ))}
+              {/* Mobile View: Horizontal Scroll-snap columns */}
+              <div className="lg:hidden relative -mx-4 px-4 overflow-hidden">
+                <div 
+                  ref={mobileKoScrollContainerRef}
+                  onScroll={handleMobileKoScroll}
+                  className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-0 pb-4 scroll-smooth"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  {/* 32-avos (R32) Column */}
+                  <div className="w-full shrink-0 snap-center px-1" data-phase="R32">
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">32-avos de Final</p>
+                      <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+                        {knockoutMatches.R32.map((match) => (
+                          <KnockoutMatchCard key={match.id} match={match} stage="R32" teamMap={teamMap} onClick={() => openEditMatch(match, "R32")} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Oitavas (R16) Column */}
+                  <div className="w-full shrink-0 snap-center px-1" data-phase="R16">
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Oitavas de Final</p>
+                      <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+                        {knockoutMatches.R16.map((match) => (
+                          <KnockoutMatchCard key={match.id} match={match} stage="R16" teamMap={teamMap} onClick={() => openEditMatch(match, "R16")} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quartas (QF) Column */}
+                  <div className="w-full shrink-0 snap-center px-1" data-phase="QF">
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Quartas de Final</p>
+                      <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+                        {knockoutMatches.QF.map((match) => (
+                          <KnockoutMatchCard key={match.id} match={match} stage="QF" teamMap={teamMap} onClick={() => openEditMatch(match, "QF")} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Semifinais (SF) Column */}
+                  <div className="w-full shrink-0 snap-center px-1" data-phase="SF">
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Semifinais</p>
+                      <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+                        {knockoutMatches.SF.map((match) => (
+                          <KnockoutMatchCard key={match.id} match={match} stage="SF" teamMap={teamMap} onClick={() => openEditMatch(match, "SF")} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decisões (FI / T3) Column */}
+                  <div className="w-full shrink-0 snap-center px-1" data-phase="FI">
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Decisões</p>
+                      <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+                        <div>
+                          <p className="text-[10px] text-emerald-400 font-bold uppercase pb-1 border-b border-emerald-500/10 mb-2.5">Decisão do Campeão (Final)</p>
+                          {knockoutMatches.FI.map((match) => (
+                            <KnockoutMatchCard key={match.id} match={match} stage="FI" teamMap={teamMap} onClick={() => openEditMatch(match, "FI")} />
+                          ))}
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase pb-1 border-b border-slate-800/60 mb-2.5">Decisão de Terceiro Lugar</p>
+                          {knockoutMatches.T3.map((match) => (
+                            <KnockoutMatchCard key={match.id} match={match} stage="T3" teamMap={teamMap} onClick={() => openEditMatch(match, "T3")} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
             </div>
@@ -2528,6 +2518,129 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* TEAM PROFILE MODAL / DRAWER */}
+      {selectedTeam && (() => {
+        const teamInfo = teamMap[selectedTeam];
+        const playerData = TEAM_PLAYERS[selectedTeam];
+        if (!teamInfo || !playerData) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in">
+            {/* Backdrop click to close */}
+            <div className="absolute inset-0 cursor-default" onClick={() => setSelectedTeam(null)}></div>
+            
+            {/* Container */}
+            <div className="relative w-full sm:max-w-lg bg-[#151d30] border border-slate-800 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-up sm:animate-zoom-in">
+              
+              {/* Slide handle on mobile */}
+              <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mt-3 sm:hidden"></div>
+
+              {/* Header */}
+              <div className="relative p-5 border-b border-slate-850/85 bg-gradient-to-b from-emerald-950/20 to-[#151d30] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <TeamFlag teamId={selectedTeam} className="w-10 h-7 object-cover rounded shadow-md" />
+                  <div>
+                    <h3 className="text-lg font-black text-slate-100 flex items-center gap-1.5 leading-none">
+                      {teamInfo.name}
+                    </h3>
+                    <p className="text-xs text-slate-450 font-medium mt-1.5">
+                      Grupo {teamInfo.groupKey} • FIFA Rank Est. #{playerData.ranking}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedTeam(null)}
+                  className="p-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-850 text-slate-450 hover:text-slate-200 border border-slate-800 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 overflow-y-auto space-y-6 no-scrollbar">
+                {/* Coach & Simulator Rating */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-950/45 p-3.5 rounded-xl border border-slate-900/60">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Treinador</span>
+                    <p className="text-sm font-bold text-slate-200 mt-1">{playerData.coach}</p>
+                  </div>
+                  <div className="bg-slate-950/45 p-3.5 rounded-xl border border-slate-900/60">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Força Simulador</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-black text-emerald-450 font-mono">{TEAM_RATINGS[selectedTeam] || 70}</span>
+                      <div className="flex-1 bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-850">
+                        <div 
+                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" 
+                          style={{ width: `${TEAM_RATINGS[selectedTeam] || 70}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="text-xs text-slate-400 leading-relaxed bg-slate-950/25 p-4 rounded-xl border border-slate-900/40">
+                  {playerData.description}
+                </div>
+
+                {/* Key Players */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pl-1">
+                    <Users className="w-4 h-4 text-emerald-400" /> Jogadores em Destaque
+                  </h4>
+                  <div className="space-y-2.5">
+                    {playerData.players.map((player, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-3 rounded-xl border flex items-center justify-between ${
+                          player.star 
+                            ? "bg-emerald-950/10 border-emerald-500/20 shadow-xs shadow-emerald-500/[0.02]" 
+                            : "bg-slate-950/30 border-slate-900/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                            player.star 
+                              ? "bg-emerald-500 text-slate-950" 
+                              : "bg-slate-900 text-slate-400"
+                          }`}>
+                            {player.star ? <Sparkles className="w-3.5 h-3.5" /> : idx + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs md:text-sm font-bold text-slate-100 truncate">{player.name}</span>
+                              {player.star && (
+                                <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full border border-emerald-500/20 font-bold uppercase tracking-wider shrink-0">
+                                  Estrela
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-500 block mt-0.5">{player.pos}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-900/50 px-2 py-1 rounded-lg border border-slate-850 shrink-0">
+                          {player.club}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-850 bg-slate-950/30 flex justify-end">
+                <button 
+                  onClick={() => setSelectedTeam(null)}
+                  className="w-full sm:w-auto bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2.5 px-5 rounded-xl transition cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
