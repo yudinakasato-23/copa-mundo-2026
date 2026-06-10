@@ -120,6 +120,111 @@ function TeamFlag({ teamId, className = "w-5 h-3.5 object-cover rounded shadow-x
   );
 }
 
+// Hook for swipe-down-to-close gesture on bottom sheets / modals
+function useSwipeToClose(isOpen, onClose) {
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
+
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+  const activeScrollEl = useRef(null);
+  const isScrollTop = useRef(true);
+  const draggingRef = useRef(false);
+  const dragYRef = useRef(0);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDragY(0);
+      setIsDragging(false);
+      draggingRef.current = false;
+      dragYRef.current = 0;
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      touchStartY.current = touch.clientY;
+      touchStartX.current = touch.clientX;
+      draggingRef.current = false;
+      dragYRef.current = 0;
+      
+      let el = e.target;
+      let foundScroll = null;
+      while (el && el !== container) {
+        const style = window.getComputedStyle(el);
+        if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+          foundScroll = el;
+          break;
+        }
+        el = el.parentElement;
+      }
+      activeScrollEl.current = foundScroll;
+      isScrollTop.current = foundScroll ? foundScroll.scrollTop <= 0 : true;
+    };
+
+    const handleTouchMove = (e) => {
+      const touch = e.touches[0];
+      const diffY = touch.clientY - touchStartY.current;
+      const diffX = touch.clientX - touchStartX.current;
+
+      if (activeScrollEl.current) {
+        isScrollTop.current = activeScrollEl.current.scrollTop <= 0;
+      }
+
+      if (draggingRef.current) {
+        if (e.cancelable) e.preventDefault();
+        const val = Math.max(0, diffY);
+        dragYRef.current = val;
+        setDragY(val);
+      } else if (diffY > 8 && Math.abs(diffY) > Math.abs(diffX) && isScrollTop.current) {
+        draggingRef.current = true;
+        setIsDragging(true);
+        if (e.cancelable) e.preventDefault();
+        const val = Math.max(0, diffY);
+        dragYRef.current = val;
+        setDragY(val);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (draggingRef.current) {
+        if (dragYRef.current > 120) {
+          onCloseRef.current();
+        }
+        setDragY(0);
+        setIsDragging(false);
+        draggingRef.current = false;
+        dragYRef.current = 0;
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen]);
+
+  return {
+    containerRef,
+    dragY,
+    isDragging
+  };
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("grupos"); // "grupos" | "matamata" | "estatisticas" | "sedes"
   const [groupMatches, setGroupMatches] = useState(generateInitialMatches);
@@ -179,6 +284,10 @@ export default function App() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const mobileKoScrollContainerRef = useRef(null);
   const [isScrollingProgrammatically, setIsScrollingProgrammatically] = useState(false);
+
+  // Swipe-to-close modal hook instances
+  const matchSwipe = useSwipeToClose(!!selectedMatch, () => setSelectedMatch(null));
+  const teamSwipe = useSwipeToClose(!!selectedTeam, () => setSelectedTeam(null));
 
   const handleMobileKoScroll = () => {
     if (isScrollingProgrammatically) return;
@@ -2345,7 +2454,14 @@ export default function App() {
 
       {/* BOTTOM SHEET / DIALOG FOR EDITING MATCH SCORES (Responsive Sheet for Mobile, Modal for Desktop) */}
       {selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center p-0 lg:p-4 bottom-sheet-backdrop">
+        <div 
+          className="fixed inset-0 z-50 flex items-end lg:items-center justify-center p-0 lg:p-4 bottom-sheet-backdrop"
+          style={{
+            backgroundColor: `rgba(3, 7, 18, ${Math.max(0, 0.6 * (1 - matchSwipe.dragY / 300))})`,
+            backdropFilter: `blur(${Math.max(0, 4 * (1 - matchSwipe.dragY / 250))}px)`,
+            transition: matchSwipe.isDragging ? 'none' : 'background-color 0.3s ease-out, backdrop-filter 0.3s ease-out'
+          }}
+        >
           
           {/* Backdrop dismisser tap area */}
           <div 
@@ -2354,7 +2470,14 @@ export default function App() {
           ></div>
           
           {/* Sheet container */}
-          <div className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-6 flex flex-col gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar">
+          <div 
+            ref={matchSwipe.containerRef}
+            className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-6 flex flex-col gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar"
+            style={{
+              transform: `translateY(${matchSwipe.dragY}px)`,
+              transition: matchSwipe.isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.94, 0.6, 1)'
+            }}
+          >
             
             {/* Slide drawer handle line (Only on mobile) */}
             <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-1 lg:hidden"></div>
@@ -2586,12 +2709,27 @@ export default function App() {
         if (!teamInfo || !playerData) return null;
 
         return (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in">
+          <div 
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
+            style={{
+              backgroundColor: `rgba(2, 6, 23, ${Math.max(0, 0.8 * (1 - teamSwipe.dragY / 300))})`,
+              backdropFilter: `blur(${Math.max(0, 4 * (1 - teamSwipe.dragY / 250))}px)`,
+              transition: teamSwipe.isDragging ? 'none' : 'background-color 0.3s ease-out, backdrop-filter 0.3s ease-out'
+            }}
+          >
             {/* Backdrop click to close */}
             <div className="absolute inset-0 cursor-default" onClick={() => setSelectedTeam(null)}></div>
             
             {/* Container */}
-            <div className="relative w-full sm:max-w-lg bg-[#151d30] border border-slate-800 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-up sm:animate-zoom-in">
+            <div 
+              ref={teamSwipe.containerRef}
+              className="relative w-full sm:max-w-lg bg-[#151d30] border border-slate-800 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-up sm:animate-zoom-in"
+              style={{
+                transform: `translateY(${teamSwipe.dragY}px)`,
+                transition: teamSwipe.isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.94, 0.6, 1)',
+                animation: teamSwipe.isDragging || teamSwipe.dragY > 0 ? 'none' : undefined
+              }}
+            >
               
               {/* Slide handle on mobile */}
               <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mt-3 sm:hidden"></div>
