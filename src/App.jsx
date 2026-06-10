@@ -885,11 +885,15 @@ export default function App() {
       { home: getTeam(firsts, "J"), away: getTeam(firsts, "L") }  // R32-16
     ];
 
+    const hasAnyGroupScores = Object.values(groupMatches).some(group => 
+      group.some(match => match.scoreHome !== "" && match.scoreAway !== "")
+    );
+
     setKnockoutMatches(prev => {
       let changed = false;
       const newR32 = prev.R32.map((match, idx) => {
-        const h = r32Teams[idx].home;
-        const a = r32Teams[idx].away;
+        const h = hasAnyGroupScores ? r32Teams[idx].home : null;
+        const a = hasAnyGroupScores ? r32Teams[idx].away : null;
         if (match.home !== h || match.away !== a) {
           changed = true;
           return { ...match, home: h, away: a };
@@ -899,7 +903,7 @@ export default function App() {
       if (!changed) return prev;
       return { ...prev, R32: newR32 };
     });
-  }, [qualificationData]);
+  }, [qualificationData, groupMatches]);
 
   // Helper to determine winner/loser
   const getMatchWinner = (match) => {
