@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
 // Initialize Supabase with Service Role Key to bypass RLS write restrictions on the backend
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -18,9 +19,9 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    db: {
-      schema: 'copa_2026'
-    }
+    db: { schema: 'copa_2026' },
+    auth: { persistSession: false },
+    realtime: { transport: ws }
   });
 
   try {

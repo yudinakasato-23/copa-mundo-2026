@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import ws from 'ws';
 
 // Configure dotenv to load environment variables from the root .env
 const __filename = fileURLToPath(import.meta.url);
@@ -28,7 +29,9 @@ const rawJson = fs.readFileSync(path.resolve(jsonPath), 'utf8');
 const updates = JSON.parse(rawJson);
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  db: { schema: 'copa_2026' }
+  db: { schema: 'copa_2026' },
+  auth: { persistSession: false },
+  realtime: { transport: ws }
 });
 
 async function main() {

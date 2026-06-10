@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import ws from 'ws';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -91,7 +92,9 @@ ${croppedHtml}
 
     // 5. Connect to Supabase
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'copa_2026' }
+      db: { schema: 'copa_2026' },
+      auth: { persistSession: false },
+      realtime: { transport: ws }
     });
 
     // Fetch existing matches to keep references and compute bracket propagation
