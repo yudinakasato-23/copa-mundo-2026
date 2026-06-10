@@ -1725,19 +1725,24 @@ export default function App() {
                         </span>
                       </p>
                       
-                      <div className="overflow-x-auto no-scrollbar bg-slate-950 rounded-xl border border-slate-900 relative">
-                        <table className="w-full text-left text-xs md:text-sm text-slate-350 min-w-[620px] lg:min-w-0 border-collapse">
+                      <div 
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        className="overflow-x-auto no-scrollbar bg-slate-950 rounded-xl border border-slate-900 relative"
+                      >
+                        <table className="w-full text-left text-xs md:text-sm text-slate-350 min-w-[540px] lg:min-w-0 border-collapse">
                           <thead>
                             <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs select-none">
-                              <th className="py-3 pl-3 pr-2 sticky left-0 z-20 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]">Seleção</th>
-                              <th className="py-3 text-center w-12 font-extrabold text-emerald-450 cursor-help" title="Pontos">PTS</th>
-                              <th className="py-3 text-center w-10 font-bold text-slate-300 cursor-help" title="Jogos (Partidas jogadas)">J</th>
-                              <th className="py-3 text-center w-10 cursor-help" title="Vitórias">V</th>
-                              <th className="py-3 text-center w-10 cursor-help" title="Empates">E</th>
-                              <th className="py-3 text-center w-10 cursor-help" title="Derrotas">D</th>
-                              <th className="py-3 text-center w-12 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
-                              <th className="py-3 text-center w-12 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
-                              <th className="py-3 text-center w-12 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
+                              <th className="py-3 pl-3 pr-2 sticky left-0 z-20 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">Seleção</th>
+                              <th className="py-3 text-center w-12 min-w-[48px] font-extrabold text-emerald-450 cursor-help" title="Pontos">PTS</th>
+                              <th className="py-3 text-center w-10 min-w-[40px] font-bold text-slate-300 cursor-help" title="Jogos (Partidas jogadas)">J</th>
+                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Vitórias">V</th>
+                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Empates">E</th>
+                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Derrotas">D</th>
+                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Pró (Gols marcados)">GP</th>
+                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
+                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900/30">
@@ -1751,7 +1756,7 @@ export default function App() {
                                     isQualifying ? "bg-emerald-500/[0.005]" : ""
                                   }`}
                                 >
-                                  <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]">
+                                  <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">
                                     <div className="flex items-center gap-2 min-w-0">
                                       <span className={`w-1 h-5 rounded-full shrink-0 ${
                                         isQualifying 
