@@ -1654,14 +1654,14 @@ export default function App() {
                           <thead>
                             <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs">
                               <th className="py-2 pl-2">Seleção</th>
-                              <th className="py-2 text-center w-8">J</th>
-                              <th className="py-2 text-center w-8">V</th>
-                              <th className="py-2 text-center w-8">E</th>
-                              <th className="py-2 text-center w-8">D</th>
-                              <th className="py-2 text-center w-10">GP</th>
-                              <th className="py-2 text-center w-10">GC</th>
-                              <th className="py-2 text-center w-10">SG</th>
-                              <th className="py-2 text-center pr-2 w-12 font-bold text-slate-400">PTS</th>
+                              <th className="py-2 text-center w-8 cursor-help" title="Jogos (Partidas jogadas)">J</th>
+                              <th className="py-2 text-center w-8 cursor-help" title="Vitórias">V</th>
+                              <th className="py-2 text-center w-8 cursor-help" title="Empates">E</th>
+                              <th className="py-2 text-center w-8 cursor-help" title="Derrotas">D</th>
+                              <th className="py-2 text-center w-10 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
+                              <th className="py-2 text-center w-10 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
+                              <th className="py-2 text-center w-10 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
+                              <th className="py-2 text-center pr-2 w-12 font-bold text-slate-400 cursor-help" title="Pontos">PTS</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900/30">
@@ -1731,9 +1731,9 @@ export default function App() {
                               <thead>
                                 <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
                                   <th className="py-1.5 pl-1">Seleção</th>
-                                  <th className="py-1.5 text-center w-10">J</th>
-                                  <th className="py-1.5 text-center w-12">SG</th>
-                                  <th className="py-1.5 text-center pr-1 w-14 font-bold text-slate-400">PTS</th>
+                                  <th className="py-1.5 text-center w-10 cursor-help" title="Jogos (Partidas jogadas)">J</th>
+                                  <th className="py-1.5 text-center w-12 cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
+                                  <th className="py-1.5 text-center pr-1 w-14 font-bold text-slate-400 cursor-help" title="Pontos">PTS</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-900/20">
@@ -1781,11 +1781,11 @@ export default function App() {
                               <thead>
                                 <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
                                   <th className="py-1.5 pl-1">Seleção</th>
-                                  <th className="py-1.5 text-center w-8">V</th>
-                                  <th className="py-1.5 text-center w-8">E</th>
-                                  <th className="py-1.5 text-center w-8">D</th>
-                                  <th className="py-1.5 text-center w-9">GP</th>
-                                  <th className="py-1.5 text-center pr-1 w-9">GC</th>
+                                  <th className="py-1.5 text-center w-8 cursor-help" title="Vitórias">V</th>
+                                  <th className="py-1.5 text-center w-8 cursor-help" title="Empates">E</th>
+                                  <th className="py-1.5 text-center w-8 cursor-help" title="Derrotas">D</th>
+                                  <th className="py-1.5 text-center w-9 cursor-help" title="Gols Pró (Gols marcados)">GP</th>
+                                  <th className="py-1.5 text-center pr-1 w-9 cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-900/20">
@@ -1829,17 +1829,31 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex gap-4 text-xs md:text-sm text-slate-400 pt-1.5 pl-1.5">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
-                      </span>
+                    <div className="flex flex-col gap-2 pt-1.5 pl-1.5">
+                      <div className="flex gap-4 text-xs md:text-sm text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
+                        </span>
+                      </div>
+                      
+                      {/* Explicação das siglas da classificação */}
+                      <div className="mt-1.5 p-3 rounded-xl bg-slate-900/30 border border-slate-900/50 text-[10px] md:text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1.5 leading-none">
+                        <span><strong>J:</strong> Jogos</span>
+                        <span><strong>V:</strong> Vitórias</span>
+                        <span><strong>E:</strong> Empates</span>
+                        <span><strong>D:</strong> Derrotas</span>
+                        <span><strong>GP:</strong> Gols Pró (Marcados)</span>
+                        <span><strong>GC:</strong> Gols Contra (Sofridos)</span>
+                        <span><strong>SG:</strong> Saldo de Gols</span>
+                        <span><strong>PTS:</strong> Pontos</span>
+                      </div>
                     </div>
 
                     {/* Group Matches Calendar List */}
-                    <div className="space-y-3.5 pt-2">
+                    <div className="space-y-3.5 pt-4">
                       <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">
                         Calendário & Jogos
                       </p>
