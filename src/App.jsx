@@ -27,6 +27,44 @@ import { TEAM_RATINGS, INITIAL_GROUPS_DATA } from './data/teams';
 import { generateInitialMatches, getBrasiliaTime } from './data/matches';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
+// FIFA 3-letter codes mapped to FlagCDN 2-letter ISO codes for high-quality SVG country flags
+const FIFA_TO_ISO = {
+  MEX: "mx", RSA: "za", KOR: "kr", CZE: "cz",
+  CAN: "ca", BIH: "ba", QAT: "qa", SUI: "ch",
+  BRA: "br", MAR: "ma", HAI: "ht", SCO: "gb-sct",
+  USA: "us", PAR: "py", AUS: "au", TUR: "tr",
+  GER: "de", CUW: "cw", CIV: "ci", ECU: "ec",
+  NED: "nl", JPN: "jp", SWE: "se", TUN: "tn",
+  BEL: "be", EGY: "eg", IRN: "ir", NZL: "nz",
+  ESP: "es", CPV: "cv", KSA: "sa", URU: "uy",
+  FRA: "fr", SEN: "sn", NOR: "no", IRQ: "iq",
+  ARG: "ar", ALG: "dz", AUT: "at", JOR: "jo",
+  POR: "pt", COD: "cd", UZB: "uz", COL: "co",
+  ENG: "gb-eng", CRO: "hr", PAN: "pa", GHA: "gh"
+};
+
+// Reusable flag component that renders a high-res SVG image
+function TeamFlag({ teamId, className = "w-5 h-3.5 object-cover rounded shadow-xs inline-block align-middle mr-1.5" }) {
+  if (!teamId) return <span className="inline-block mr-1 text-xs">🏳️</span>;
+  const iso = FIFA_TO_ISO[teamId];
+  if (!iso) {
+    // If it's a placeholder (like "1º Grupo A") rather than a 3-letter FIFA code
+    return <span className="inline-block mr-1 text-xs">🏳️</span>;
+  }
+  return (
+    <img 
+      src={`https://flagcdn.com/w40/${iso}.png`} 
+      alt={teamId}
+      className={className}
+      loading="lazy"
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = "https://flagcdn.com/w40/un.png";
+      }}
+    />
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("grupos"); // "grupos" | "matamata" | "estatisticas" | "sedes"
   const [groupMatches, setGroupMatches] = useState(generateInitialMatches);
@@ -34,6 +72,38 @@ export default function App() {
   const [expandedGroup, setExpandedGroup] = useState("A");
   const [isSimulating, setIsSimulating] = useState(false);
   const [isDbSyncing, setIsDbSyncing] = useState(false);
+  
+  // Custom simulation and admin states
+  const [isSimulationMode, setIsSimulationMode] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [officialGroupMatches, setOfficialGroupMatches] = useState(null);
+  const [officialKnockoutMatches, setOfficialKnockoutMatches] = useState(null);
+  const [slideDirection, setSlideDirection] = useState("right"); // "right" | "left"
+
+  // Refs and arrow states for scroll indicators
+  const groupScrollRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const handleGroupScroll = () => {
+    if (groupScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = groupScrollRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  const koScrollRef = useRef(null);
+  const [showKoLeft, setShowKoLeft] = useState(false);
+  const [showKoRight, setShowKoRight] = useState(true);
+
+  const handleKoScroll = () => {
+    if (koScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = koScrollRef.current;
+      setShowKoLeft(scrollLeft > 10);
+      setShowKoRight(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
   
   // State for active match editing in Bottom Sheet / Modal
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -209,62 +279,157 @@ export default function App() {
   // Load matches from Supabase on mount
   useEffect(() => {
     const loadMatches = async () => {
-      if (!isSupabaseConfigured) return;
-      setIsDbSyncing(true);
-      try {
-        const { data, error } = await supabase.from('matches').select('*');
-        if (error) throw error;
+      let dbGroupMatches = generateInitialMatches();
+      let dbKnockoutMatches = {
+        R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
+        FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+      };
 
-        if (data && data.length > 0) {
-          const loadedGroupMatches = generateInitialMatches();
-          const loadedKnockout = {
-            R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-            R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-            QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-            SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-            T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
-            FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
-          };
+      if (isSupabaseConfigured) {
+        setIsDbSyncing(true);
+        try {
+          const { data, error } = await supabase.from('matches').select('*');
+          if (error) throw error;
 
-          data.forEach(m => {
-            const isKnockout = m.id.includes('-') || m.id.startsWith('T3') || m.id.startsWith('FI');
-            
-            if (isKnockout) {
-              const stage = m.id.split('-')[0];
-              const match = loadedKnockout[stage]?.find(x => x.id === m.id);
-              if (match) {
-                match.home = m.home || null;
-                match.away = m.away || null;
-                match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
-                match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
-                match.penHome = m.pen_home !== null ? m.pen_home.toString() : "";
-                match.penAway = m.pen_away !== null ? m.pen_away.toString() : "";
+          if (data && data.length > 0) {
+            data.forEach(m => {
+              const isKnockout = m.id.includes('-') || m.id.startsWith('T3') || m.id.startsWith('FI');
+              
+              if (isKnockout) {
+                const stage = m.id.split('-')[0];
+                const match = dbKnockoutMatches[stage]?.find(x => x.id === m.id);
+                if (match) {
+                  match.home = m.home || null;
+                  match.away = m.away || null;
+                  match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
+                  match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
+                  match.penHome = m.pen_home !== null ? m.pen_home.toString() : "";
+                  match.penAway = m.pen_away !== null ? m.pen_away.toString() : "";
+                }
+              } else {
+                const groupKey = m.id.charAt(0);
+                const match = dbGroupMatches[groupKey]?.find(x => x.id === m.id);
+                if (match) {
+                  match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
+                  match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
+                }
               }
-            } else {
-              const groupKey = m.id.charAt(0);
-              const match = loadedGroupMatches[groupKey]?.find(x => x.id === m.id);
-              if (match) {
-                match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
-                match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
-              }
-            }
-          });
-
-          setGroupMatches(loadedGroupMatches);
-          setKnockoutMatches(loadedKnockout);
-        } else {
-          // Database is empty, let's seed it
-          await seedSupabaseDatabase();
+            });
+          } else {
+            // Database is empty, let's seed it
+            await seedSupabaseDatabase();
+          }
+        } catch (err) {
+          console.error("Erro ao buscar dados do Supabase:", err.message);
+        } finally {
+          setIsDbSyncing(false);
         }
-      } catch (err) {
-        console.error("Erro ao buscar dados do Supabase:", err.message);
-      } finally {
-        setIsDbSyncing(false);
+      }
+
+      setOfficialGroupMatches(dbGroupMatches);
+      setOfficialKnockoutMatches(dbKnockoutMatches);
+
+      // Check if user has an active simulation in localStorage
+      const savedG = localStorage.getItem("copa_2026_group_matches");
+      const savedK = localStorage.getItem("copa_2026_knockout_matches");
+
+      if (savedG && savedK) {
+        try {
+          setGroupMatches(JSON.parse(savedG));
+          setKnockoutMatches(JSON.parse(savedK));
+          setIsSimulationMode(true);
+        } catch (e) {
+          console.error("Erro ao carregar simulação salva:", e);
+          setGroupMatches(dbGroupMatches);
+          setKnockoutMatches(dbKnockoutMatches);
+          setIsSimulationMode(false);
+        }
+      } else {
+        setGroupMatches(dbGroupMatches);
+        setKnockoutMatches(dbKnockoutMatches);
+        setIsSimulationMode(false);
       }
     };
 
     loadMatches();
   }, []);
+
+  // Scroll event listener effect for mobile scrollers
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleGroupScroll();
+      handleKoScroll();
+    }, 100);
+
+    const groupEl = groupScrollRef.current;
+    if (groupEl) {
+      groupEl.addEventListener('scroll', handleGroupScroll);
+    }
+
+    const koEl = koScrollRef.current;
+    if (koEl) {
+      koEl.addEventListener('scroll', handleKoScroll);
+    }
+
+    const handleResize = () => {
+      handleGroupScroll();
+      handleKoScroll();
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      if (groupEl) groupEl.removeEventListener('scroll', handleGroupScroll);
+      if (koEl) koEl.removeEventListener('scroll', handleKoScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [activeTab, expandedGroup]);
+
+  // Leave Simulation Mode helper
+  const leaveSimulationMode = () => {
+    localStorage.removeItem("copa_2026_group_matches");
+    localStorage.removeItem("copa_2026_knockout_matches");
+    
+    if (officialGroupMatches && officialKnockoutMatches) {
+      setGroupMatches(officialGroupMatches);
+      setKnockoutMatches(officialKnockoutMatches);
+    } else {
+      setGroupMatches(generateInitialMatches());
+      setKnockoutMatches({
+        R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
+        FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+      });
+    }
+    setIsSimulationMode(false);
+  };
+
+  // Toggle Admin / Editor Mode helper
+  const toggleAdminMode = () => {
+    if (isAdminMode) {
+      setIsAdminMode(false);
+    } else {
+      const pass = prompt("Digite a senha do administrador para salvar placares diretamente no Supabase:");
+      if (pass === "copa2026") {
+        setIsAdminMode(true);
+        setIsSimulationMode(false);
+        if (officialGroupMatches && officialKnockoutMatches) {
+          setGroupMatches(officialGroupMatches);
+          setKnockoutMatches(officialKnockoutMatches);
+        }
+      } else if (pass !== null) {
+        alert("Senha incorreta!");
+      }
+    }
+  };
 
   // Group standings computation
   const groupStandings = useMemo(() => {
@@ -717,7 +882,7 @@ export default function App() {
     };
   };
 
-  // Simulates the entire tournament (groups + bracket) with database synchronization
+  // Simulates the entire tournament (groups + bracket) with local storage or database synchronization
   const simulateEntireTournament = async () => {
     setIsSimulating(true);
     const simulatedGroups = simulateGroupStage();
@@ -726,30 +891,61 @@ export default function App() {
     setGroupMatches(simulatedGroups);
     setKnockoutMatches(simulatedKnockout);
 
-    if (isSupabaseConfigured) {
-      await syncMatchesToSupabase(simulatedGroups, simulatedKnockout);
+    if (isAdminMode) {
+      if (isSupabaseConfigured) {
+        await syncMatchesToSupabase(simulatedGroups, simulatedKnockout);
+        setOfficialGroupMatches(simulatedGroups);
+        setOfficialKnockoutMatches(simulatedKnockout);
+      }
+    } else {
+      setIsSimulationMode(true);
+      localStorage.setItem("copa_2026_group_matches", JSON.stringify(simulatedGroups));
+      localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(simulatedKnockout));
     }
     
     setIsSimulating(false);
   };
 
-  // Resets everything in memory and on Supabase
+  // Resets everything in memory, localStorage, and/or Supabase
   const resetAll = async () => {
-    const emptyGroups = generateInitialMatches();
-    const emptyKnockout = {
-      R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-      R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-      QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-      SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
-      T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
-      FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
-    };
+    if (isAdminMode) {
+      const emptyGroups = generateInitialMatches();
+      const emptyKnockout = {
+        R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+        T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
+        FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+      };
 
-    setGroupMatches(emptyGroups);
-    setKnockoutMatches(emptyKnockout);
+      setGroupMatches(emptyGroups);
+      setKnockoutMatches(emptyKnockout);
+      setOfficialGroupMatches(emptyGroups);
+      setOfficialKnockoutMatches(emptyKnockout);
 
-    if (isSupabaseConfigured) {
-      await syncMatchesToSupabase(emptyGroups, emptyKnockout);
+      if (isSupabaseConfigured) {
+        await syncMatchesToSupabase(emptyGroups, emptyKnockout);
+      }
+    } else {
+      localStorage.removeItem("copa_2026_group_matches");
+      localStorage.removeItem("copa_2026_knockout_matches");
+      
+      if (officialGroupMatches && officialKnockoutMatches) {
+        setGroupMatches(officialGroupMatches);
+        setKnockoutMatches(officialKnockoutMatches);
+      } else {
+        setGroupMatches(generateInitialMatches());
+        setKnockoutMatches({
+          R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+          R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+          QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+          SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
+          T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
+          FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+        });
+      }
+      setIsSimulationMode(false);
     }
   };
 
@@ -762,7 +958,7 @@ export default function App() {
     setEditingPenAway(match.penAway || "");
   };
 
-  // Confirms match editing inside Bottom Sheet and saves to database
+  // Confirms match editing inside Bottom Sheet and saves
   const saveMatchScore = async () => {
     if (!selectedMatch) return;
 
@@ -786,7 +982,9 @@ export default function App() {
           return m;
         })
       };
+      updatedKnockout = simulateFullKnockoutState(updatedGroups);
       setGroupMatches(updatedGroups);
+      setKnockoutMatches(updatedKnockout);
     } else {
       const stage = selectedMatch.type; 
       updatedKnockout = {
@@ -804,50 +1002,48 @@ export default function App() {
           return m;
         })
       };
+      updatedKnockout = simulateFullKnockoutState(updatedGroups, updatedKnockout);
       setKnockoutMatches(updatedKnockout);
     }
 
     setSelectedMatch(null);
 
-    // Save to Supabase
-    if (isSupabaseConfigured) {
-      setIsDbSyncing(true);
-      try {
-        const scoreHomeVal = sh === "" ? null : parseInt(sh, 10);
-        const scoreAwayVal = sa === "" ? null : parseInt(sa, 10);
-        const penHomeVal = ph === "" ? null : parseInt(ph, 10);
-        const penAwayVal = pa === "" ? null : parseInt(pa, 10);
+    if (isAdminMode) {
+      if (isSupabaseConfigured) {
+        setIsDbSyncing(true);
+        try {
+          const scoreHomeVal = sh === "" ? null : parseInt(sh, 10);
+          const scoreAwayVal = sa === "" ? null : parseInt(sa, 10);
+          const penHomeVal = ph === "" ? null : parseInt(ph, 10);
+          const penAwayVal = pa === "" ? null : parseInt(pa, 10);
 
-        // Update match score
-        const { error } = await supabase
-          .from('matches')
-          .update({
-            score_home: scoreHomeVal,
-            score_away: scoreAwayVal,
-            pen_home: penHomeVal,
-            pen_away: penAwayVal,
-            home: selectedMatch.home || "",
-            away: selectedMatch.away || ""
-          })
-          .eq('id', selectedMatch.id);
+          const { error } = await supabase
+            .from('matches')
+            .update({
+              score_home: scoreHomeVal,
+              score_away: scoreAwayVal,
+              pen_home: penHomeVal,
+              pen_away: penAwayVal,
+              home: selectedMatch.home || "",
+              away: selectedMatch.away || ""
+            })
+            .eq('id', selectedMatch.id);
 
-        if (error) throw error;
-
-        // If a group stage match changed, update all bracket dependencies dynamically in Supabase as well
-        if (selectedMatch.type === "group") {
-          // Re-simulate knockout propagation from local state updates and sync
-          const localKnockoutSync = simulateFullKnockoutState(updatedGroups);
-          await syncMatchesToSupabase(updatedGroups, localKnockoutSync);
-        } else {
-          // Update subsequent knockout phases
-          const localKnockoutSync = simulateFullKnockoutState(updatedGroups);
-          await syncMatchesToSupabase(updatedGroups, localKnockoutSync);
+          if (error) throw error;
+          
+          await syncMatchesToSupabase(updatedGroups, updatedKnockout);
+          setOfficialGroupMatches(updatedGroups);
+          setOfficialKnockoutMatches(updatedKnockout);
+        } catch (err) {
+          console.error("Erro ao salvar no Supabase:", err.message);
+        } finally {
+          setIsDbSyncing(false);
         }
-      } catch (err) {
-        console.error("Erro ao salvar no Supabase:", err.message);
-      } finally {
-        setIsDbSyncing(false);
       }
+    } else {
+      setIsSimulationMode(true);
+      localStorage.setItem("copa_2026_group_matches", JSON.stringify(updatedGroups));
+      localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(updatedKnockout));
     }
   };
 
@@ -869,7 +1065,7 @@ export default function App() {
     }
   };
 
-  // Swipe gesture detection to change group
+  // Swipe gesture detection to change group with direction layout
   const handleTouchStart = (e) => {
     touchStartX.current = e.targetTouches[0].clientX;
   };
@@ -885,11 +1081,25 @@ export default function App() {
 
     if (diff > 60) {
       if (currentIndex < groups.length - 1) {
-        setExpandedGroup(groups[currentIndex + 1]);
+        setSlideDirection("right");
+        if (document.startViewTransition) {
+          document.startViewTransition(() => {
+            setExpandedGroup(groups[currentIndex + 1]);
+          });
+        } else {
+          setExpandedGroup(groups[currentIndex + 1]);
+        }
       }
     } else if (diff < -60) {
       if (currentIndex > 0) {
-        setExpandedGroup(groups[currentIndex - 1]);
+        setSlideDirection("left");
+        if (document.startViewTransition) {
+          document.startViewTransition(() => {
+            setExpandedGroup(groups[currentIndex - 1]);
+          });
+        } else {
+          setExpandedGroup(groups[currentIndex - 1]);
+        }
       }
     }
   };
@@ -957,6 +1167,7 @@ export default function App() {
     Object.keys(goalsByTeam).forEach(teamId => {
       if (goalsByTeam[teamId] > topScoringTeam.goals) {
         topScoringTeam = {
+          id: teamId,
           name: teamMap[teamId]?.name || teamId,
           flag: teamMap[teamId]?.flag || "",
           goals: goalsByTeam[teamId]
@@ -995,12 +1206,6 @@ export default function App() {
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-yellow-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent">
                   COPA DO MUNDO 2026
                 </h1>
-                
-                {isSupabaseConfigured && (
-                  <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider">
-                    <Database className={`w-3 h-3 ${isDbSyncing ? 'animate-spin' : ''}`} /> Supabase Conectado
-                  </span>
-                )}
               </div>
               <p className="text-xs md:text-sm text-slate-400 mt-0.5 font-medium flex items-center gap-1.5">
                 <span>Canadá • México • Estados Unidos</span>
@@ -1043,6 +1248,7 @@ export default function App() {
                   </>
                 )}
               </button>
+              
               <button 
                 onClick={resetAll}
                 disabled={isDbSyncing}
@@ -1051,6 +1257,21 @@ export default function App() {
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
+
+              {isSupabaseConfigured && (
+                <button
+                  onClick={toggleAdminMode}
+                  disabled={isDbSyncing}
+                  className={`p-3 rounded-xl border transition duration-300 flex items-center justify-center cursor-pointer ${
+                    isAdminMode 
+                      ? "bg-red-500/20 border-red-500/45 text-red-400 hover:bg-red-500/30" 
+                      : "bg-slate-900/80 hover:bg-slate-850 border-slate-800 hover:border-slate-750 text-slate-400 hover:text-slate-200"
+                  }`}
+                  title={isAdminMode ? "Desativar modo editor" : "Ativar modo editor (Admin)"}
+                >
+                  <Database className={`w-4 h-4 ${isDbSyncing ? 'animate-spin' : ''}`} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1086,7 +1307,7 @@ export default function App() {
               <p className="text-xs font-bold text-slate-100 truncate max-w-[140px] mt-0.5">
                 {stats.topScoringTeam.goals > 0 ? (
                   <span className="flex items-center gap-1">
-                    <span>{stats.topScoringTeam.flag}</span>
+                    <TeamFlag teamId={stats.topScoringTeam.id} />
                     <span>{stats.topScoringTeam.name}</span>
                     <span className="text-[10px] text-emerald-400 font-mono">({stats.topScoringTeam.goals})</span>
                   </span>
@@ -1103,7 +1324,7 @@ export default function App() {
               <p className="text-xs font-black text-emerald-400 truncate max-w-[140px] mt-0.5">
                 {stats.champion ? (
                   <span className="flex items-center gap-1">
-                    <span>{stats.champion.flag}</span>
+                    <TeamFlag teamId={stats.champion.id} />
                     <span className="tracking-tight uppercase">{stats.champion.name}</span>
                   </span>
                 ) : 'Aguardando Final'}
@@ -1141,6 +1362,56 @@ export default function App() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-1 w-full">
         
+        {/* Banner Status do Banco vs Simulação */}
+        <div className="mb-6">
+          {isSimulationMode ? (
+            <div className="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md animate-fade-in">
+              <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span>🔮 MODO SIMULAÇÃO ATIVO</span>
+                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">(Os palpites estão salvos no seu navegador)</span>
+              </div>
+              <button 
+                onClick={leaveSimulationMode}
+                className="text-[10px] font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
+              >
+                Voltar para Resultados Reais
+              </button>
+            </div>
+          ) : isAdminMode ? (
+            <div className="bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md animate-fade-in">
+              <div className="flex items-center gap-2 text-red-400 text-xs font-bold">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+                <span>✍️ MODO EDITOR ATIVO (ADMIN)</span>
+                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">(Alterações gravam diretamente no Supabase)</span>
+              </div>
+              <button 
+                onClick={() => setIsAdminMode(false)}
+                className="text-[10px] font-bold text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-1.5 rounded-lg transition cursor-pointer"
+              >
+                Sair do Modo Editor
+              </button>
+            </div>
+          ) : (
+            <div className="bg-emerald-500/5 border border-emerald-500/10 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-sm animate-fade-in">
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>⚽ RESULTADOS OFICIAIS DA COPA</span>
+                {isSupabaseConfigured && <span className="text-[9px] text-slate-500 font-medium">(Conectado ao banco Supabase)</span>}
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium">
+                Edite qualquer placar para entrar no modo de simulação pessoal
+              </span>
+            </div>
+          )}
+        </div>
+        
         {/* TAB 1: GROUP STAGE */}
         {activeTab === "grupos" && (
           <div className="space-y-6">
@@ -1169,24 +1440,58 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick Groups Pills Scroller (Mobile UI / Scroll horizontal) */}
-            <div className="flex overflow-x-auto no-scrollbar gap-2 pb-1 lg:hidden">
-              {Object.keys(INITIAL_GROUPS_DATA).map(groupKey => {
-                const isSelected = expandedGroup === groupKey;
-                return (
-                  <button
-                    key={groupKey}
-                    onClick={() => setExpandedGroup(groupKey)}
-                    className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer ${
-                      isSelected 
-                        ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
-                        : "bg-slate-900/70 text-slate-400 border border-slate-900"
-                    }`}
-                  >
-                    Grupo {groupKey}
-                  </button>
-                );
-              })}
+            {/* Quick Groups Pills Scroller (Mobile UI / Scroll horizontal - Sticky and Fade arrows) */}
+            <div className="sticky top-0 z-30 lg:hidden -mx-4 px-4 py-3 bg-slate-950/95 backdrop-blur-md border-b border-slate-900 shadow-md">
+              <div className="relative">
+                {/* Left Arrow overlay */}
+                {showLeftArrow && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent pr-4 pl-1 flex items-center z-10 pointer-events-none">
+                    <ChevronLeft className="w-4 h-4 text-emerald-400" />
+                  </div>
+                )}
+
+                {/* The scroll list */}
+                <div 
+                  ref={groupScrollRef}
+                  className="flex overflow-x-auto no-scrollbar gap-2"
+                >
+                  {Object.keys(INITIAL_GROUPS_DATA).map(groupKey => {
+                    const isSelected = expandedGroup === groupKey;
+                    return (
+                      <button
+                        key={groupKey}
+                        onClick={() => {
+                          const groups = Object.keys(INITIAL_GROUPS_DATA);
+                          const oldIdx = groups.indexOf(expandedGroup);
+                          const newIdx = groups.indexOf(groupKey);
+                          setSlideDirection(newIdx > oldIdx ? "right" : "left");
+                          if (document.startViewTransition) {
+                            document.startViewTransition(() => {
+                              setExpandedGroup(groupKey);
+                            });
+                          } else {
+                            setExpandedGroup(groupKey);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                          isSelected 
+                            ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
+                            : "bg-slate-900/70 text-slate-400 border border-slate-900"
+                        }`}
+                      >
+                        Grupo {groupKey}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Arrow overlay */}
+                {showRightArrow && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-slate-950 via-slate-950/80 to-transparent pl-4 pr-1 flex items-center z-10 pointer-events-none">
+                    <ChevronRight className="w-4 h-4 text-emerald-400" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Main Double Column Layout */}
@@ -1235,7 +1540,7 @@ export default function App() {
                           >
                             <span className="flex items-center gap-1.5 truncate max-w-[160px]">
                               <span className="font-mono text-[9px] text-slate-500 w-3">{idx + 1}º</span>
-                              <span className="text-sm">{team.flag}</span>
+                              <TeamFlag teamId={team.id} />
                               <span className="font-medium truncate">{team.name}</span>
                             </span>
                             <div className="flex items-center gap-2 font-bold text-[10px]">
@@ -1250,9 +1555,9 @@ export default function App() {
                 })}
               </div>
 
-              {/* Right Column: Detailed Group View (Standings Table + Matches) */}
               <div 
-                className="lg:col-span-7 space-y-6"
+                key={`${expandedGroup}-${slideDirection}`}
+                className={`lg:col-span-7 space-y-6 ${slideDirection === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -1265,9 +1570,6 @@ export default function App() {
                           <h3 className="text-xl font-extrabold text-slate-100">
                             Grupo {expandedGroup}
                           </h3>
-                          <span className="text-[10px] text-slate-500 bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-800 lg:hidden">
-                            Arraste para o lado
-                          </span>
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">Classificação do grupo e calendário</p>
                       </div>
@@ -1289,8 +1591,16 @@ export default function App() {
                           setGroupMatches(newGroupMatchesState);
                           setKnockoutMatches(localKnockoutSync);
 
-                          if (isSupabaseConfigured) {
-                            await syncMatchesToSupabase(newGroupMatchesState, localKnockoutSync);
+                          if (isAdminMode) {
+                            if (isSupabaseConfigured) {
+                              await syncMatchesToSupabase(newGroupMatchesState, localKnockoutSync);
+                              setOfficialGroupMatches(newGroupMatchesState);
+                              setOfficialKnockoutMatches(localKnockoutSync);
+                            }
+                          } else {
+                            setIsSimulationMode(true);
+                            localStorage.setItem("copa_2026_group_matches", JSON.stringify(newGroupMatchesState));
+                            localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(localKnockoutSync));
                           }
                         }}
                         disabled={isDbSyncing}
@@ -1338,7 +1648,7 @@ export default function App() {
                                           : "bg-transparent"
                                     }`}></span>
                                     <span className="font-mono text-[10px] text-slate-500">{idx + 1}º</span>
-                                    <span className="text-base">{team.flag}</span>
+                                    <TeamFlag teamId={team.id} />
                                     <span className="font-bold text-slate-100">{team.name}</span>
                                   </td>
                                   <td className="py-3 text-center font-mono">{team.j}</td>
@@ -1404,7 +1714,7 @@ export default function App() {
                               {/* Scoreline */}
                               <div className="flex justify-between items-center gap-3 py-1.5">
                                 <div className="flex items-center gap-2 max-w-[42%] truncate">
-                                  <span className="text-xl leading-none shrink-0">{homeTeam.flag}</span>
+                                  <TeamFlag teamId={match.home} />
                                   <span className="font-bold text-xs text-slate-100 truncate">{homeTeam.name}</span>
                                 </div>
                                 
@@ -1422,7 +1732,7 @@ export default function App() {
 
                                 <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
                                   <span className="font-bold text-xs text-slate-100 truncate">{awayTeam.name}</span>
-                                  <span className="text-xl leading-none shrink-0">{awayTeam.flag}</span>
+                                  <TeamFlag teamId={match.away} />
                                 </div>
                               </div>
                               
@@ -1472,8 +1782,14 @@ export default function App() {
                 onClick={async () => {
                   const localKnockoutSync = simulateFullKnockoutState(groupMatches);
                   setKnockoutMatches(localKnockoutSync);
-                  if (isSupabaseConfigured) {
-                    await syncMatchesToSupabase(groupMatches, localKnockoutSync);
+                  if (isAdminMode) {
+                    if (isSupabaseConfigured) {
+                      await syncMatchesToSupabase(groupMatches, localKnockoutSync);
+                      setOfficialKnockoutMatches(localKnockoutSync);
+                    }
+                  } else {
+                    setIsSimulationMode(true);
+                    localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(localKnockoutSync));
                   }
                 }}
                 disabled={isDbSyncing}
@@ -1484,26 +1800,48 @@ export default function App() {
             </div>
 
             {/* Mobile Knockout Stage Tabs */}
-            <div className="flex overflow-x-auto no-scrollbar gap-1.5 pb-1 lg:hidden">
-              {[
-                { id: "R32", label: "32-avos" },
-                { id: "R16", label: "Oitavas" },
-                { id: "QF", label: "Quartas" },
-                { id: "SF", label: "Semifinais" },
-                { id: "FI", label: "Decisões" }
-              ].map(phase => (
-                <button
-                  key={phase.id}
-                  onClick={() => setActiveKnockoutPhase(phase.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                    activeKnockoutPhase === phase.id 
-                      ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
-                      : "bg-slate-900/70 text-slate-400 border border-slate-900"
-                  }`}
+            <div className="sticky top-0 z-30 lg:hidden -mx-4 px-4 py-3 bg-slate-950/95 backdrop-blur-md border-b border-slate-900 shadow-md">
+              <div className="relative">
+                {/* Left Arrow overlay */}
+                {showKoLeft && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent pr-4 pl-1 flex items-center z-10 pointer-events-none">
+                    <ChevronLeft className="w-4 h-4 text-emerald-400" />
+                  </div>
+                )}
+
+                {/* The scroll list */}
+                <div 
+                  ref={koScrollRef}
+                  className="flex overflow-x-auto no-scrollbar gap-1.5 pb-1"
                 >
-                  {phase.label}
-                </button>
-              ))}
+                  {[
+                    { id: "R32", label: "32-avos" },
+                    { id: "R16", label: "Oitavas" },
+                    { id: "QF", label: "Quartas" },
+                    { id: "SF", label: "Semifinais" },
+                    { id: "FI", label: "Decisões" }
+                  ].map(phase => (
+                    <button
+                      key={phase.id}
+                      onClick={() => setActiveKnockoutPhase(phase.id)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        activeKnockoutPhase === phase.id 
+                          ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
+                          : "bg-slate-900/70 text-slate-400 border border-slate-900"
+                      }`}
+                    >
+                      {phase.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right Arrow overlay */}
+                {showKoRight && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-slate-950 via-slate-950/80 to-transparent pl-4 pr-1 flex items-center z-10 pointer-events-none">
+                    <ChevronRight className="w-4 h-4 text-emerald-400" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Knockout Bracket Grid (Responsive scroll-snap layout on mobile, side by side on desktop) */}
@@ -1861,7 +2199,7 @@ export default function App() {
                   
                   {/* Home Team */}
                   <div className="flex-1 flex flex-col items-center gap-2 text-center max-w-[40%]">
-                    <span className="text-4xl leading-none">{teamMap[selectedMatch.home]?.flag}</span>
+                    <TeamFlag teamId={selectedMatch.home} className="w-14 h-10 object-cover rounded shadow-md" />
                     <span className="font-extrabold text-xs text-slate-100 truncate w-full">
                       {teamMap[selectedMatch.home]?.name}
                     </span>
@@ -1941,7 +2279,7 @@ export default function App() {
 
                   {/* Away Team */}
                   <div className="flex-1 flex flex-col items-center gap-2 text-center max-w-[40%]">
-                    <span className="text-4xl leading-none">{teamMap[selectedMatch.away]?.flag}</span>
+                    <TeamFlag teamId={selectedMatch.away} className="w-14 h-10 object-cover rounded shadow-md" />
                     <span className="font-extrabold text-xs text-slate-100 truncate w-full">
                       {teamMap[selectedMatch.away]?.name}
                     </span>
@@ -2060,7 +2398,7 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
           <div className="flex items-center gap-1.5 max-w-[78%] truncate">
             {home ? (
               <>
-                <span className="text-base leading-none shrink-0">{home.flag}</span>
+                <TeamFlag teamId={match.home} className="w-4 h-3 object-cover rounded shadow-xs inline-block align-middle mr-1" />
                 <span className={`font-bold truncate ${homeWinner ? "text-emerald-400 font-extrabold" : hasPlayed ? "text-slate-400" : "text-slate-200"}`}>
                   {home.name}
                 </span>
@@ -2087,7 +2425,7 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
           <div className="flex items-center gap-1.5 max-w-[78%] truncate">
             {away ? (
               <>
-                <span className="text-base leading-none shrink-0">{away.flag}</span>
+                <TeamFlag teamId={match.away} className="w-4 h-3 object-cover rounded shadow-xs inline-block align-middle mr-1" />
                 <span className={`font-bold truncate ${awayWinner ? "text-emerald-400 font-extrabold" : hasPlayed ? "text-slate-400" : "text-slate-200"}`}>
                   {away.name}
                 </span>
