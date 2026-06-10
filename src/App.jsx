@@ -72,6 +72,7 @@ export default function App() {
   const [expandedGroup, setExpandedGroup] = useState("A");
   const [isSimulating, setIsSimulating] = useState(false);
   const [isDbSyncing, setIsDbSyncing] = useState(false);
+  const [isTableFlipped, setIsTableFlipped] = useState(false);
   
   // Custom simulation and admin states
   const [isSimulationMode, setIsSimulationMode] = useState(false);
