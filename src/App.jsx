@@ -89,6 +89,15 @@ const enrichKnockoutMatch = (match) => {
   return { ...match, ...sched };
 };
 
+const enrichKnockoutState = (koState) => {
+  if (!koState) return koState;
+  const enriched = {};
+  Object.keys(koState).forEach(stage => {
+    enriched[stage] = koState[stage].map(enrichKnockoutMatch);
+  });
+  return enriched;
+};
+
 // Reusable flag component that renders a high-res SVG image
 function TeamFlag({ teamId, className = "w-5 h-3.5 object-cover rounded shadow-xs inline-block align-middle mr-1.5" }) {
   if (!teamId) return <span className="inline-block mr-1 text-xs">🏳️</span>;
@@ -400,14 +409,14 @@ export default function App() {
   useEffect(() => {
     const loadMatches = async () => {
       let dbGroupMatches = generateInitialMatches();
-      let dbKnockoutMatches = {
+      let dbKnockoutMatches = enrichKnockoutState({
         R32: Array.from({ length: 16 }, (_, i) => ({ id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
         R16: Array.from({ length: 8 }, (_, i) => ({ id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
         QF: Array.from({ length: 4 }, (_, i) => ({ id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
         SF: Array.from({ length: 2 }, (_, i) => ({ id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })),
         T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
         FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
-      };
+      });
 
       if (isSupabaseConfigured) {
         setIsDbSyncing(true);
@@ -460,7 +469,7 @@ export default function App() {
       if (savedG && savedK) {
         try {
           setGroupMatches(JSON.parse(savedG));
-          setKnockoutMatches(JSON.parse(savedK));
+          setKnockoutMatches(enrichKnockoutState(JSON.parse(savedK)));
           setIsSimulationMode(true);
         } catch (e) {
           console.error("Erro ao carregar simulação salva:", e);
