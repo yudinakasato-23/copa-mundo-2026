@@ -564,11 +564,17 @@ export default function App() {
     ];
 
     setKnockoutMatches(prev => {
-      const newR32 = prev.R32.map((match, idx) => ({
-        ...match,
-        home: r32Teams[idx].home,
-        away: r32Teams[idx].away
-      }));
+      let changed = false;
+      const newR32 = prev.R32.map((match, idx) => {
+        const h = r32Teams[idx].home;
+        const a = r32Teams[idx].away;
+        if (match.home !== h || match.away !== a) {
+          changed = true;
+          return { ...match, home: h, away: a };
+        }
+        return match;
+      });
+      if (!changed) return prev;
       return { ...prev, R32: newR32 };
     });
   }, [qualificationData]);
@@ -606,13 +612,16 @@ export default function App() {
         { hIdx: 8, aIdx: 9 }, { hIdx: 10, aIdx: 11 },
         { hIdx: 12, aIdx: 13 }, { hIdx: 14, aIdx: 15 }
       ];
+      let changed = false;
       const newR16 = prev.R16.map((match, idx) => {
         const map = r16Mapping[idx];
-        return {
-          ...match,
-          home: getMatchWinner(prev.R32[map.hIdx]),
-          away: getMatchWinner(prev.R32[map.aIdx])
-        };
+        const h = getMatchWinner(prev.R32[map.hIdx]);
+        const a = getMatchWinner(prev.R32[map.aIdx]);
+        if (match.home !== h || match.away !== a) {
+          changed = true;
+          return { ...match, home: h, away: a };
+        }
+        return match;
       });
 
       // 2. QF from R16 winners
@@ -622,11 +631,13 @@ export default function App() {
       ];
       const newQF = prev.QF.map((match, idx) => {
         const map = qfMapping[idx];
-        return {
-          ...match,
-          home: getMatchWinner(newR16[map.hIdx]),
-          away: getMatchWinner(newR16[map.aIdx])
-        };
+        const h = getMatchWinner(newR16[map.hIdx]);
+        const a = getMatchWinner(newR16[map.aIdx]);
+        if (match.home !== h || match.away !== a) {
+          changed = true;
+          return { ...match, home: h, away: a };
+        }
+        return match;
       });
 
       // 3. SF from QF winners
@@ -635,25 +646,35 @@ export default function App() {
       ];
       const newSF = prev.SF.map((match, idx) => {
         const map = sfMapping[idx];
-        return {
-          ...match,
-          home: getMatchWinner(newQF[map.hIdx]),
-          away: getMatchWinner(newQF[map.aIdx])
-        };
+        const h = getMatchWinner(newQF[map.hIdx]);
+        const a = getMatchWinner(newQF[map.aIdx]);
+        if (match.home !== h || match.away !== a) {
+          changed = true;
+          return { ...match, home: h, away: a };
+        }
+        return match;
       });
 
       // 4. 3rd Place (T3) and Final (FI)
-      const newT3 = [{
-        ...prev.T3[0],
-        home: getMatchLoser(newSF[0]),
-        away: getMatchLoser(newSF[1])
-      }];
+      const t3Home = getMatchLoser(newSF[0]);
+      const t3Away = getMatchLoser(newSF[1]);
+      let newT3 = prev.T3;
+      if (prev.T3[0].home !== t3Home || prev.T3[0].away !== t3Away) {
+        changed = true;
+        newT3 = [{ ...prev.T3[0], home: t3Home, away: t3Away }];
+      }
 
-      const newFI = [{
-        ...prev.FI[0],
-        home: getMatchWinner(newSF[0]),
-        away: getMatchWinner(newSF[1])
-      }];
+      const fiHome = getMatchWinner(newSF[0]);
+      const fiAway = getMatchWinner(newSF[1]);
+      let newFI = prev.FI;
+      if (prev.FI[0].home !== fiHome || prev.FI[0].away !== fiAway) {
+        changed = true;
+        newFI = [{ ...prev.FI[0], home: fiHome, away: fiAway }];
+      }
+
+      if (!changed) {
+        return prev;
+      }
 
       return {
         ...prev,
