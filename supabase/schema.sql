@@ -24,31 +24,20 @@ CREATE TABLE IF NOT EXISTS copa_2026.matches (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Dar permissões de leitura/escrita nas tabelas atuais e futuras do schema
+-- 4. Dar permissões de leitura/escrita nas tabelas
 GRANT ALL ON ALL TABLES IN SCHEMA copa_2026 TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA copa_2026 TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA copa_2026 GRANT ALL ON TABLES TO anon, authenticated, service_role;
 
--- 5. Habilitar RLS (Row Level Security) para segurança
+-- 5. Habilitar RLS (Row Level Security)
 ALTER TABLE copa_2026.matches ENABLE ROW LEVEL SECURITY;
 
--- 6. Políticas de Segurança (RLS Policies)
--- Permite leitura pública de jogos
-CREATE POLICY "Permitir leitura publica para todas as partidas"
-ON copa_2026.matches
-FOR SELECT
-USING (true);
+-- 6. Políticas de Segurança (RLS Policies - formatadas em linha única e snake_case para evitar erros de parser)
+DROP POLICY IF EXISTS allow_public_select ON copa_2026.matches;
+CREATE POLICY allow_public_select ON copa_2026.matches FOR SELECT USING (true);
 
--- Permite atualizações públicas (Útil para testes rápidos de palpites direto do front-end)
--- Nota: Para restringir a produção no futuro, comente esta linha e use a de service_role.
-CREATE POLICY "Permitir modificacoes publicas anonimas para testes de simulacao"
-ON copa_2026.matches
-FOR UPDATE
-USING (true)
-WITH CHECK (true);
+DROP POLICY IF EXISTS allow_public_update ON copa_2026.matches;
+CREATE POLICY allow_public_update ON copa_2026.matches FOR UPDATE USING (true) WITH CHECK (true);
 
--- Permite inserções apenas para administradores/service_role (segurança de seed)
-CREATE POLICY "Permitir insercoes apenas via service_role"
-ON copa_2026.matches
-FOR INSERT
-WITH CHECK (true);
+DROP POLICY IF EXISTS allow_service_role_insert ON copa_2026.matches;
+CREATE POLICY allow_service_role_insert ON copa_2026.matches FOR INSERT WITH CHECK (true);
