@@ -116,6 +116,8 @@ export default function App() {
   // Touch gestures for swipe detection
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
   // Active knockout phase selection for mobile swipe layout
   const [activeKnockoutPhase, setActiveKnockoutPhase] = useState("R32");
@@ -1090,18 +1092,29 @@ export default function App() {
   // Swipe gesture detection to change group with direction layout
   const handleTouchStart = (e) => {
     touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+    touchEndY.current = e.targetTouches[0].clientY;
   };
 
   const handleTouchMove = (e) => {
     touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
   };
 
   const handleTouchEnd = () => {
-    const diff = touchStartX.current - touchEndX.current;
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    // Ignore swipe if vertical movement is greater than horizontal movement (scrolling)
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+      return;
+    }
+
     const groups = Object.keys(INITIAL_GROUPS_DATA);
     const currentIndex = groups.indexOf(expandedGroup);
 
-    if (diff > 60) {
+    if (diffX > 60) {
       if (currentIndex < groups.length - 1) {
         setSlideDirection("right");
         if (document.startViewTransition) {
@@ -1112,7 +1125,7 @@ export default function App() {
           setExpandedGroup(groups[currentIndex + 1]);
         }
       }
-    } else if (diff < -60) {
+    } else if (diffX < -60) {
       if (currentIndex > 0) {
         setSlideDirection("left");
         if (document.startViewTransition) {
@@ -1635,11 +1648,11 @@ export default function App() {
                     {/* Table of Standings */}
                     {/* Desktop View: Full Standings Table */}
                     <div className="hidden lg:block space-y-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">Classificação</p>
+                      <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">Classificação</p>
                       <div className="overflow-x-auto no-scrollbar bg-slate-950/40 rounded-xl border border-slate-900 p-2">
-                        <table className="w-full text-left text-xs text-slate-300">
+                        <table className="w-full text-left text-xs md:text-sm text-slate-300">
                           <thead>
-                            <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-[9px]">
+                            <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs">
                               <th className="py-2 pl-2">Seleção</th>
                               <th className="py-2 text-center w-8">J</th>
                               <th className="py-2 text-center w-8">V</th>
@@ -1671,7 +1684,7 @@ export default function App() {
                                             ? "bg-yellow-500/40" 
                                             : "bg-transparent"
                                       }`}></span>
-                                      <span className="font-mono text-[10px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                      <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
                                       <TeamFlag teamId={team.id} />
                                       <span className="font-bold text-slate-100 truncate">{team.name}</span>
                                     </div>
@@ -1699,13 +1712,13 @@ export default function App() {
                     {/* Mobile/Tablet View: Interactive 3D Flip Card Standings */}
                     <div className="lg:hidden space-y-2.5">
                       <div className="flex justify-between items-center pl-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Classificação</p>
+                        <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Classificação</p>
                         <button 
                           onClick={() => setIsTableFlipped(!isTableFlipped)}
-                          className="text-[9px] font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
+                          className="text-[10px] md:text-xs font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
                         >
-                          <RotateCcw className="w-3 h-3 text-emerald-500" />
-                          {isTableFlipped ? "Ver Classificação" : "Ver Detalhes (V/E/D)"}
+                          <RotateCcw className="w-3.5 h-3.5 text-emerald-500" />
+                          {isTableFlipped ? "Ver Classificação Geral" : "Ver Estatísticas Completas"}
                         </button>
                       </div>
 
@@ -1714,9 +1727,9 @@ export default function App() {
                           
                           {/* FRONT: Simplified Table (Seleção | J | SG | PTS) */}
                           <div className="flip-card-front absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
-                            <table className="w-full text-left text-xs text-slate-300">
+                            <table className="w-full text-left text-xs md:text-sm text-slate-300">
                               <thead>
-                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-[9px]">
+                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
                                   <th className="py-1.5 pl-1">Seleção</th>
                                   <th className="py-1.5 text-center w-10">J</th>
                                   <th className="py-1.5 text-center w-12">SG</th>
@@ -1743,7 +1756,7 @@ export default function App() {
                                                 ? "bg-yellow-500/40" 
                                                 : "bg-transparent"
                                           }`}></span>
-                                          <span className="font-mono text-[9px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                          <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
                                           <TeamFlag teamId={team.id} />
                                           <span className="font-bold text-slate-100 truncate max-w-[130px]">{team.name}</span>
                                         </div>
@@ -1764,9 +1777,9 @@ export default function App() {
 
                           {/* BACK: Detailed Stats Table (Seleção | V | E | D | GP | GC) */}
                           <div className="flip-card-back absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
-                            <table className="w-full text-left text-xs text-slate-300">
+                            <table className="w-full text-left text-xs md:text-sm text-slate-300">
                               <thead>
-                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-[9px]">
+                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-xs">
                                   <th className="py-1.5 pl-1">Seleção</th>
                                   <th className="py-1.5 text-center w-8">V</th>
                                   <th className="py-1.5 text-center w-8">E</th>
@@ -1795,7 +1808,7 @@ export default function App() {
                                                 ? "bg-yellow-500/40" 
                                                 : "bg-transparent"
                                           }`}></span>
-                                          <span className="font-mono text-[9px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                          <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
                                           <TeamFlag teamId={team.id} />
                                           <span className="font-bold text-slate-100 truncate max-w-[100px]">{team.name}</span>
                                         </div>
@@ -1816,7 +1829,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex gap-4 text-[10px] text-slate-400 pt-1.5 pl-1.5">
+                    <div className="flex gap-4 text-xs md:text-sm text-slate-400 pt-1.5 pl-1.5">
                       <span className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
                       </span>
@@ -1827,7 +1840,7 @@ export default function App() {
 
                     {/* Group Matches Calendar List */}
                     <div className="space-y-3.5 pt-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+                      <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">
                         Calendário & Jogos
                       </p>
                       
@@ -1847,7 +1860,7 @@ export default function App() {
                               className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3.5 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-sm"
                             >
                               {/* Match header info */}
-                              <div className="flex justify-between items-center text-[10px] text-slate-400 border-b border-slate-950 pb-2 mb-3">
+                              <div className="flex justify-between items-center text-xs md:text-sm text-slate-400 border-b border-slate-950 pb-2 mb-3">
                                 <span className="font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900">
                                   {match.round}
                                 </span>
@@ -1860,29 +1873,29 @@ export default function App() {
                               <div className="flex justify-between items-center gap-3 py-1.5">
                                 <div className="flex items-center gap-2 max-w-[42%] truncate">
                                   <TeamFlag teamId={match.home} />
-                                  <span className="font-bold text-xs text-slate-100 truncate">{homeTeam.name}</span>
+                                  <span className="font-bold text-sm md:text-base text-slate-100 truncate">{homeTeam.name}</span>
                                 </div>
                                 
                                 <div className="flex items-center gap-1 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-950">
                                   {showResults ? (
                                     <>
-                                      <span className="font-mono font-bold text-sm text-slate-100">{match.scoreHome}</span>
+                                      <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreHome}</span>
                                       <span className="text-slate-600 font-semibold px-0.5">-</span>
-                                      <span className="font-mono font-bold text-sm text-slate-100">{match.scoreAway}</span>
+                                      <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreAway}</span>
                                     </>
                                   ) : (
-                                    <span className="text-[10px] font-bold text-emerald-400 uppercase px-1 py-0.5">Editar</span>
+                                    <span className="text-xs font-bold text-emerald-400 uppercase px-1 py-0.5">Editar</span>
                                   )}
                                 </div>
 
                                 <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
-                                  <span className="font-bold text-xs text-slate-100 truncate">{awayTeam.name}</span>
+                                  <span className="font-bold text-sm md:text-base text-slate-100 truncate">{awayTeam.name}</span>
                                   <TeamFlag teamId={match.away} />
                                 </div>
                               </div>
                               
                               {/* Timezone display & venue */}
-                              <div className="mt-3.5 pt-2 border-t border-slate-950 flex flex-col gap-1 text-[9px] text-slate-400 group-hover:text-slate-350 transition">
+                              <div className="mt-3.5 pt-2 border-t border-slate-950 flex flex-col gap-1 text-xs md:text-sm text-slate-400 group-hover:text-slate-350 transition">
                                 <div className="flex items-center justify-between text-slate-500">
                                   <span className="flex items-center gap-1">
                                     <Clock className="w-3 h-3 text-emerald-500/70" /> 
@@ -1890,7 +1903,7 @@ export default function App() {
                                   </span>
                                   <span>Local: <strong className="text-slate-350">{match.localTime} ({match.fuso})</strong></span>
                                 </div>
-                                <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                                <div className="flex items-center gap-1 text-xs md:text-sm text-slate-500">
                                   <MapPin className="w-2.5 h-2.5" />
                                   <span className="truncate">{match.estadio} ({match.cidade})</span>
                                 </div>
@@ -2260,7 +2273,7 @@ export default function App() {
                 }`}
               >
                 <tab.icon className={`w-5 h-5 mb-1 ${isSelected ? "text-emerald-400" : "text-slate-500"}`} />
-                <span className="text-[10px]">{tab.label}</span>
+                <span className="text-xs">{tab.label}</span>
               </button>
             );
           })}
@@ -2530,9 +2543,9 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
   return (
     <div 
       onClick={onClick}
-      className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-center text-xs group shadow animate-fade-in"
+      className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-center text-xs md:text-sm group shadow animate-fade-in"
     >
-      <div className="flex justify-between items-center text-[8.5px] text-slate-500 border-b border-slate-950 pb-1.5 mb-2.5">
+      <div className="flex justify-between items-center text-[10px] md:text-xs text-slate-500 border-b border-slate-950 pb-1.5 mb-2.5">
         <span className="font-bold">{match.id}</span>
         <span>Mata-mata</span>
       </div>
@@ -2549,15 +2562,15 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
                 </span>
               </>
             ) : (
-              <span className="text-slate-500 font-mono text-[10px]">—</span>
+              <span className="text-slate-500 font-mono text-xs">—</span>
             )}
           </div>
           
-          <div className="flex items-center gap-1 font-mono text-xs">
+          <div className="flex items-center gap-1 font-mono text-xs md:text-sm">
             {hasPlayed && (
               <>
                 {match.penHome !== "" && (
-                  <span className="text-[9px] text-slate-500 bg-slate-950 px-1 rounded">({match.penHome})</span>
+                  <span className="text-[10px] md:text-xs text-slate-500 bg-slate-950 px-1 rounded">({match.penHome})</span>
                 )}
                 <span className={`font-bold w-4 text-center ${homeWinner ? "text-emerald-400" : "text-slate-500"}`}>{match.scoreHome}</span>
               </>
@@ -2576,15 +2589,15 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
                 </span>
               </>
             ) : (
-              <span className="text-slate-500 font-mono text-[10px]">—</span>
+              <span className="text-slate-500 font-mono text-xs">—</span>
             )}
           </div>
           
-          <div className="flex items-center gap-1 font-mono text-xs">
+          <div className="flex items-center gap-1 font-mono text-xs md:text-sm">
             {hasPlayed && (
               <>
                 {match.penAway !== "" && (
-                  <span className="text-[9px] text-slate-500 bg-slate-950 px-1 rounded">({match.penAway})</span>
+                  <span className="text-[10px] md:text-xs text-slate-500 bg-slate-950 px-1 rounded">({match.penAway})</span>
                 )}
                 <span className={`font-bold w-4 text-center ${awayWinner ? "text-emerald-400" : "text-slate-500"}`}>{match.scoreAway}</span>
               </>
@@ -2595,16 +2608,16 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
       
       {/* Edit overlay prompt */}
       {!home || !away ? (
-        <div className="text-[8px] text-slate-650 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between">
+        <div className="text-[10px] md:text-xs text-slate-600 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between">
           <span>Aguardando confrontos</span>
         </div>
       ) : !hasPlayed ? (
-        <div className="text-[8px] text-emerald-500/70 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between group-hover:text-emerald-400 transition font-bold uppercase">
+        <div className="text-[10px] md:text-xs text-emerald-500/70 border-t border-slate-950/40 pt-1.5 mt-2 flex items-center justify-between group-hover:text-emerald-400 transition font-bold uppercase">
           <span>Registrar placar</span>
           <Plus className="w-2.5 h-2.5" />
         </div>
       ) : (
-        <div className="text-[8px] text-slate-500 border-t border-slate-950/45 pt-1.5 mt-2 flex items-center justify-between">
+        <div className="text-[10px] md:text-xs text-slate-500 border-t border-slate-950/45 pt-1.5 mt-2 flex items-center justify-between">
           <span className="truncate">Confirmado</span>
           <span className="text-slate-600">Editar</span>
         </div>

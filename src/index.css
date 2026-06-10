@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+html {
+  font-size: 16px; /* Base browser standard on mobile */
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 17.5px; /* Scale up slightly on tablets */
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 19px; /* Scale up on desktop screens for improved legibility */
+  }
+}
+
 /* Custom theme variables for a premium, high-fidelity dark soccer aesthetic */
 :root {
   --bg-deep: #0b0f19;
