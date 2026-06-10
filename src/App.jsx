@@ -43,6 +43,52 @@ const FIFA_TO_ISO = {
   ENG: "gb-eng", CRO: "hr", PAN: "pa", GHA: "gh"
 };
 
+// Schedule, venue and timezone mapping for World Cup 2026 knockout stage matches
+const KNOCKOUT_SCHEDULE_DATA = {
+  "R32-1": { date: "28/06/2026", localTime: "18:00", estadio: "SoFi Stadium", cidade: "Los Angeles", fuso: "UTC-7", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-2": { date: "28/06/2026", localTime: "19:00", estadio: "AT&T Stadium", cidade: "Dallas", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-3": { date: "28/06/2026", localTime: "15:00", estadio: "MetLife Stadium", cidade: "Nova York / Nova Jersey", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-4": { date: "29/06/2026", localTime: "17:00", estadio: "BC Place", cidade: "Vancouver", fuso: "UTC-7", pais: "Canadá", bandeira: "🇨🇦" },
+  "R32-5": { date: "29/06/2026", localTime: "18:00", estadio: "Estádio Azteca", cidade: "Cidade do México", fuso: "UTC-6", pais: "México", bandeira: "🇲🇽" },
+  "R32-6": { date: "29/06/2026", localTime: "19:00", estadio: "Mercedes-Benz Stadium", cidade: "Atlanta", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-7": { date: "30/06/2026", localTime: "16:00", estadio: "Hard Rock Stadium", cidade: "Miami", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-8": { date: "30/06/2026", localTime: "15:00", estadio: "Gillette Stadium", cidade: "Boston", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-9": { date: "30/06/2026", localTime: "18:00", estadio: "NRG Stadium", cidade: "Houston", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-10": { date: "01/07/2026", localTime: "17:00", estadio: "Levi's Stadium", cidade: "São Francisco / Bay Area", fuso: "UTC-7", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-11": { date: "01/07/2026", localTime: "19:00", estadio: "Lumen Field", cidade: "Seattle", fuso: "UTC-7", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-12": { date: "01/07/2026", localTime: "15:00", estadio: "Lincoln Financial Field", cidade: "Philadelphia", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-13": { date: "02/07/2026", localTime: "18:00", estadio: "GEHA Field at Arrowhead", cidade: "Kansas City", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  "R32-14": { date: "02/07/2026", localTime: "17:00", estadio: "BMO Field", cidade: "Toronto", fuso: "UTC-4", pais: "Canadá", bandeira: "🇨🇦" },
+  "R32-15": { date: "03/07/2026", localTime: "19:00", estadio: "Estádio BBVA", cidade: "Monterrey", fuso: "UTC-6", pais: "México", bandeira: "🇲🇽" },
+  "R32-16": { date: "03/07/2026", localTime: "18:00", estadio: "Estádio Akron", cidade: "Guadalajara", fuso: "UTC-6", pais: "México", bandeira: "🇲🇽" },
+  
+  "R16-1": { date: "04/07/2026", localTime: "16:00", estadio: "Lincoln Financial Field", cidade: "Philadelphia", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R16-2": { date: "04/07/2026", localTime: "19:00", estadio: "NRG Stadium", cidade: "Houston", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  "R16-3": { date: "05/07/2026", localTime: "15:00", estadio: "MetLife Stadium", cidade: "Nova York / Nova Jersey", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R16-4": { date: "05/07/2026", localTime: "17:00", estadio: "Estádio Azteca", cidade: "Cidade do México", fuso: "UTC-6", pais: "México", bandeira: "🇲🇽" },
+  "R16-5": { date: "06/07/2026", localTime: "18:00", estadio: "Lumen Field", cidade: "Seattle", fuso: "UTC-7", pais: "EUA", bandeira: "🇺🇸" },
+  "R16-6": { date: "06/07/2026", localTime: "19:00", estadio: "BC Place", cidade: "Vancouver", fuso: "UTC-7", pais: "Canadá", bandeira: "🇨🇦" },
+  "R16-7": { date: "07/07/2026", localTime: "16:00", estadio: "Mercedes-Benz Stadium", cidade: "Atlanta", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "R16-8": { date: "07/07/2026", localTime: "17:00", estadio: "Gillette Stadium", cidade: "Boston", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  
+  "QF-1": { date: "09/07/2026", localTime: "18:00", estadio: "Gillette Stadium", cidade: "Boston", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "QF-2": { date: "10/07/2026", localTime: "17:00", estadio: "SoFi Stadium", cidade: "Los Angeles", fuso: "UTC-7", pais: "EUA", bandeira: "🇺🇸" },
+  "QF-3": { date: "11/07/2026", localTime: "15:00", estadio: "Hard Rock Stadium", cidade: "Miami", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "QF-4": { date: "11/07/2026", localTime: "19:00", estadio: "GEHA Field at Arrowhead", cidade: "Kansas City", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  
+  "SF-1": { date: "14/07/2026", localTime: "19:00", estadio: "AT&T Stadium", cidade: "Dallas", fuso: "UTC-5", pais: "EUA", bandeira: "🇺🇸" },
+  "SF-2": { date: "15/07/2026", localTime: "19:00", estadio: "Mercedes-Benz Stadium", cidade: "Atlanta", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  
+  "T3-1": { date: "18/07/2026", localTime: "16:00", estadio: "Hard Rock Stadium", cidade: "Miami", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" },
+  "FI-1": { date: "19/07/2026", localTime: "16:00", estadio: "MetLife Stadium", cidade: "Nova York / Nova Jersey", fuso: "UTC-4", pais: "EUA", bandeira: "🇺🇸" }
+};
+
+const enrichKnockoutMatch = (match) => {
+  const sched = KNOCKOUT_SCHEDULE_DATA[match.id];
+  if (!sched) return match;
+  return { ...match, ...sched };
+};
+
 // Reusable flag component that renders a high-res SVG image
 function TeamFlag({ teamId, className = "w-5 h-3.5 object-cover rounded shadow-xs inline-block align-middle mr-1.5" }) {
   if (!teamId) return <span className="inline-block mr-1 text-xs">🏳️</span>;
@@ -196,20 +242,20 @@ export default function App() {
 
   // Knockout stage matches structure
   const [knockoutMatches, setKnockoutMatches] = useState({
-    R32: Array.from({ length: 16 }, (_, i) => ({
+    R32: Array.from({ length: 16 }, (_, i) => enrichKnockoutMatch({
       id: `R32-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
     })),
-    R16: Array.from({ length: 8 }, (_, i) => ({
+    R16: Array.from({ length: 8 }, (_, i) => enrichKnockoutMatch({
       id: `R16-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
     })),
-    QF: Array.from({ length: 4 }, (_, i) => ({
+    QF: Array.from({ length: 4 }, (_, i) => enrichKnockoutMatch({
       id: `QF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
     })),
-    SF: Array.from({ length: 2 }, (_, i) => ({
+    SF: Array.from({ length: 2 }, (_, i) => enrichKnockoutMatch({
       id: `SF-${i + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: ""
     })),
-    T3: [{ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }],
-    FI: [{ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" }]
+    T3: [enrichKnockoutMatch({ id: "T3-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })],
+    FI: [enrichKnockoutMatch({ id: "FI-1", home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" })]
   });
 
   const teamMap = useMemo(() => {
@@ -968,12 +1014,12 @@ export default function App() {
     }
 
     return {
-      R32: simR32,
-      R16: simR16,
-      QF: simQF,
-      SF: simSF,
-      T3: [simT3],
-      FI: [simFI]
+      R32: simR32.map(enrichKnockoutMatch),
+      R16: simR16.map(enrichKnockoutMatch),
+      QF: simQF.map(enrichKnockoutMatch),
+      SF: simSF.map(enrichKnockoutMatch),
+      T3: [simT3].map(enrichKnockoutMatch),
+      FI: [simFI].map(enrichKnockoutMatch)
     };
   };
 
@@ -2736,6 +2782,17 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
           </div>
         </div>
       </div>
+
+      {/* Date & Venue Info */}
+      {match.date && (
+        <div className="text-[9px] text-slate-500 border-t border-slate-950/20 pt-2 mt-2.5 flex flex-col gap-0.5 leading-tight select-none">
+          <div className="flex justify-between items-center text-slate-400 font-semibold">
+            <span>{match.date} • {getBrasiliaTime(match.localTime, match.fuso)} (DF)</span>
+            <span className="text-slate-500 font-mono text-[8px]">{match.cidade}</span>
+          </div>
+          <span className="text-[8px] text-slate-600 truncate">{match.estadio}</span>
+        </div>
+      )}
       
       {/* Edit overlay prompt */}
       {!home || !away ? (
