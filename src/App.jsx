@@ -289,6 +289,79 @@ export default function App() {
   const matchSwipe = useSwipeToClose(!!selectedMatch, () => setSelectedMatch(null));
   const teamSwipe = useSwipeToClose(!!selectedTeam, () => setSelectedTeam(null));
 
+  // Mobile horizontal scroll-snap states and sync for groups
+  const mobileGroupScrollContainerRef = useRef(null);
+  const [isScrollingGroupProgrammatically, setIsScrollingGroupProgrammatically] = useState(false);
+
+  const handleMobileGroupScroll = () => {
+    if (isScrollingGroupProgrammatically) return;
+    const container = mobileGroupScrollContainerRef.current;
+    if (!container) return;
+
+    const scrollLeft = container.scrollLeft;
+    const containerWidth = container.clientWidth;
+    if (containerWidth === 0) return;
+
+    const index = Math.round(scrollLeft / containerWidth);
+    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+    if (index >= 0 && index < groups.length) {
+      const currentGroup = groups[index];
+      if (expandedGroup !== currentGroup) {
+        setExpandedGroup(currentGroup);
+        
+        // Scroll the quick pills tab buttons to keep the active one in view
+        if (groupScrollRef.current) {
+          const tabButton = groupScrollRef.current.children[index];
+          if (tabButton) {
+            tabButton.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center"
+            });
+          }
+        }
+      }
+    }
+  };
+
+  const scrollToGroupColumn = (groupId) => {
+    setExpandedGroup(groupId);
+    const container = mobileGroupScrollContainerRef.current;
+    if (!container) return;
+
+    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+    const index = groups.indexOf(groupId);
+    if (index !== -1) {
+      setIsScrollingGroupProgrammatically(true);
+      const containerWidth = container.clientWidth;
+      container.scrollTo({
+        left: index * containerWidth,
+        behavior: "smooth"
+      });
+      
+      setTimeout(() => {
+        setIsScrollingGroupProgrammatically(false);
+      }, 450);
+    }
+  };
+
+  // Sync scroll position of groups container when activeTab or expandedGroup changes
+  useEffect(() => {
+    if (activeTab === "grupos" && mobileGroupScrollContainerRef.current) {
+      const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+      const index = groups.indexOf(expandedGroup);
+      if (index !== -1) {
+        const container = mobileGroupScrollContainerRef.current;
+        const containerWidth = container.clientWidth;
+        if (containerWidth > 0 && Math.abs(container.scrollLeft - index * containerWidth) > 5) {
+          setIsScrollingGroupProgrammatically(true);
+          container.scrollLeft = index * containerWidth;
+          setIsScrollingGroupProgrammatically(false);
+        }
+      }
+    }
+  }, [activeTab, expandedGroup]);
+
   // Lock body scroll when a modal is open to prevent background page from scrolling
   useEffect(() => {
     if (selectedMatch || selectedTeam) {
@@ -1472,6 +1545,241 @@ export default function App() {
     };
   }, [groupMatches, knockoutMatches, teamMap]);
 
+  const renderGroupDetails = (groupKey) => {
+    if (!groupKey) return null;
+    const standings = groupStandings[groupKey];
+    const matches = groupMatches[groupKey];
+    if (!standings || !matches) return null;
+
+    return (
+      <div className="bg-slate-900/30 rounded-2xl border border-slate-900 p-4 md:p-6 space-y-6">
+        <div className="flex justify-between items-center border-b border-slate-900 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-extrabold text-slate-100">
+                Grupo {groupKey}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">Classificação do grupo e calendário</p>
+          </div>
+          
+          <button 
+            onClick={async () => {
+              const updatedMatchesForThisGroup = groupMatches[groupKey].map(match => {
+                const { sh, sa } = simulateMatchScore(match.home, match.away);
+                return { ...match, scoreHome: sh.toString(), scoreAway: sa.toString() };
+              });
+
+              const newGroupMatchesState = {
+                ...groupMatches,
+                [groupKey]: updatedMatchesForThisGroup
+              };
+
+              const localKnockoutSync = simulateFullKnockoutState(newGroupMatchesState);
+
+              setGroupMatches(newGroupMatchesState);
+              setKnockoutMatches(localKnockoutSync);
+
+              if (isAdminMode) {
+                if (isSupabaseConfigured) {
+                  await syncMatchesToSupabase(newGroupMatchesState, localKnockoutSync);
+                  setOfficialGroupMatches(newGroupMatchesState);
+                  setOfficialKnockoutMatches(localKnockoutSync);
+                }
+              } else {
+                setIsSimulationMode(true);
+                localStorage.setItem("copa_2026_group_matches", JSON.stringify(newGroupMatchesState));
+                localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(localKnockoutSync));
+              }
+            }}
+            disabled={isDbSyncing}
+            className="bg-slate-900 hover:bg-slate-850 disabled:opacity-50 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2 px-3.5 rounded-xl transition cursor-pointer"
+          >
+            Simular Grupo
+          </button>
+        </div>
+
+        {/* Table of Standings */}
+        <div className="space-y-2">
+          <p className="text-xs md:text-sm font-bold text-slate-450 uppercase tracking-wider pl-1 flex items-center justify-between">
+            <span>Classificação</span>
+            <span className="text-[10px] md:text-xs text-slate-500 font-medium normal-case font-mono">
+              (Clique na seleção para ver escalação/estrelas)
+            </span>
+          </p>
+          
+          <div 
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="overflow-x-auto no-scrollbar bg-slate-950 rounded-xl border border-slate-900 relative"
+          >
+            <table className="w-full text-left text-xs md:text-sm text-slate-350 min-w-[540px] lg:min-w-0 border-collapse">
+              <thead>
+                <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs select-none">
+                  <th className="py-3 pl-3 pr-2 sticky left-0 z-20 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">Seleção</th>
+                  <th className="py-3 text-center w-12 min-w-[48px] font-extrabold text-emerald-450 cursor-help" title="Pontos">PTS</th>
+                  <th className="py-3 text-center w-10 min-w-[40px] font-bold text-slate-300 cursor-help" title="Jogos (Partidas jogadas)">J</th>
+                  <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Vitórias">V</th>
+                  <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Empates">E</th>
+                  <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Derrotas">D</th>
+                  <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Pró (Gols marcados)">GP</th>
+                  <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
+                  <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-900/30">
+                {standings.map((team, idx) => {
+                  const isQualifying = idx < 2;
+                  const isBestThirdCandidate = idx === 2;
+                  return (
+                    <tr 
+                      key={team.id}
+                      className={`hover:bg-slate-900/30 transition duration-150 ${
+                        isQualifying ? "bg-emerald-500/[0.005]" : ""
+                      }`}
+                    >
+                      <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`w-1 h-5 rounded-full shrink-0 ${
+                            isQualifying 
+                              ? "bg-emerald-500" 
+                              : isBestThirdCandidate 
+                                ? "bg-yellow-500/40" 
+                                : "bg-transparent"
+                          }`}></span>
+                          <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
+                          <TeamFlag teamId={team.id} />
+                          <button 
+                            onClick={() => setSelectedTeam(team.id)}
+                            className="font-bold text-slate-100 hover:text-emerald-400 transition-colors text-left truncate cursor-pointer focus:outline-hidden"
+                          >
+                            {team.name}
+                          </button>
+                        </div>
+                      </td>
+                      <td className={`py-3.5 text-center font-extrabold font-mono text-sm md:text-base ${
+                        isQualifying ? "text-emerald-450" : "text-slate-200"
+                      }`}>{team.pts}</td>
+                      <td className="py-3.5 text-center font-mono font-semibold text-slate-300">{team.j}</td>
+                      <td className="py-3.5 text-center font-mono text-slate-400">{team.v}</td>
+                      <td className="py-3.5 text-center font-mono text-slate-400">{team.e}</td>
+                      <td className="py-3.5 text-center font-mono text-slate-400">{team.d}</td>
+                      <td className="py-3.5 text-center font-mono text-slate-400">{team.gp}</td>
+                      <td className="py-3.5 text-center font-mono text-slate-400">{team.gc}</td>
+                      <td className={`py-3.5 text-center font-mono font-bold ${
+                        team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-450"
+                      }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 pt-1.5 pl-1.5">
+          <div className="flex gap-4 text-xs md:text-sm text-slate-450">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
+            </span>
+          </div>
+          
+          {/* Explicação das siglas da classificação */}
+          <div className="mt-1.5 p-3 rounded-xl bg-slate-900/30 border border-slate-900/50 text-[10px] md:text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1.5 leading-none">
+            <span><strong>J:</strong> Jogos</span>
+            <span><strong>V:</strong> Vitórias</span>
+            <span><strong>E:</strong> Empates</span>
+            <span><strong>D:</strong> Derrotas</span>
+            <span><strong>GP:</strong> Gols Pró (Marcados)</span>
+            <span><strong>GC:</strong> Gols Contra (Sofridos)</span>
+            <span><strong>SG:</strong> Saldo de Gols</span>
+            <span><strong>PTS:</strong> Pontos</span>
+          </div>
+        </div>
+
+        {/* Group Matches Calendar List */}
+        <div className="space-y-3.5 pt-4">
+          <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">
+            Calendário & Jogos
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {matches.map((match) => {
+              const homeTeam = teamMap[match.home] || { name: match.home, flag: "" };
+              const awayTeam = teamMap[match.away] || { name: match.away, flag: "" };
+              const showResults = match.scoreHome !== "" && match.scoreAway !== "";
+              
+              // Calculate Brasilia Time
+              const brTime = getBrasiliaTime(match.localTime, match.fuso);
+              
+              return (
+                <div 
+                  key={match.id}
+                  onClick={() => openEditMatch(match, "group", groupKey)}
+                  className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3.5 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-sm"
+                >
+                  {/* Match header info */}
+                  <div className="flex justify-between items-center text-xs md:text-sm text-slate-400 border-b border-slate-950 pb-2 mb-3">
+                    <span className="font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900">
+                      {match.round}
+                    </span>
+                    <span className="text-slate-500 font-medium">
+                      {match.date}
+                    </span>
+                  </div>
+                  
+                  {/* Scoreline */}
+                  <div className="flex justify-between items-center gap-3 py-1.5">
+                    <div className="flex items-center gap-2 max-w-[42%] truncate">
+                      <TeamFlag teamId={match.home} />
+                      <span className="font-bold text-sm md:text-base text-slate-100 truncate">{homeTeam.name}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-950">
+                      {showResults ? (
+                        <>
+                          <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreHome}</span>
+                          <span className="text-slate-600 font-semibold px-0.5">-</span>
+                          <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreAway}</span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-bold text-emerald-400 uppercase px-1 py-0.5">Editar</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
+                      <span className="font-bold text-sm md:text-base text-slate-100 truncate">{awayTeam.name}</span>
+                      <TeamFlag teamId={match.away} />
+                    </div>
+                  </div>
+                  
+                  {/* Timezone display & venue */}
+                  <div className="mt-3.5 pt-2 border-t border-slate-950 flex flex-col gap-1 text-xs md:text-sm text-slate-400 group-hover:text-slate-350 transition">
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-emerald-500/70" /> 
+                        <span>Brasília: <strong className="text-slate-300 font-bold">{brTime}</strong></span>
+                      </span>
+                      <span>Local: <strong className="text-slate-350">{match.localTime} ({match.fuso})</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs md:text-sm text-slate-500">
+                      <MapPin className="w-2.5 h-2.5" />
+                      <span className="truncate">{match.estadio} ({match.cidade})</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen pb-24 lg:pb-8 flex flex-col transition-native">
       {/* Premium Dark Header banner */}
@@ -1741,19 +2049,7 @@ export default function App() {
                     return (
                       <button
                         key={groupKey}
-                        onClick={() => {
-                          const groups = Object.keys(INITIAL_GROUPS_DATA);
-                          const oldIdx = groups.indexOf(expandedGroup);
-                          const newIdx = groups.indexOf(groupKey);
-                          setSlideDirection(newIdx > oldIdx ? "right" : "left");
-                          if (document.startViewTransition) {
-                            document.startViewTransition(() => {
-                              setExpandedGroup(groupKey);
-                            });
-                          } else {
-                            setExpandedGroup(groupKey);
-                          }
-                        }}
+                        onClick={() => scrollToGroupColumn(groupKey)}
                         className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer ${
                           isSelected 
                             ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20" 
@@ -1836,240 +2132,30 @@ export default function App() {
                 })}
               </div>
 
-              <div 
-                key={`${expandedGroup}-${slideDirection}`}
-                className={`lg:col-span-7 space-y-6 ${slideDirection === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                {expandedGroup && (
-                  <div className="bg-slate-900/30 rounded-2xl border border-slate-900 p-4 md:p-6 space-y-6">
-                    <div className="flex justify-between items-center border-b border-slate-900 pb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-extrabold text-slate-100">
-                            Grupo {expandedGroup}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5">Classificação do grupo e calendário</p>
-                      </div>
-                      
-                      <button 
-                        onClick={async () => {
-                          const updatedMatchesForThisGroup = groupMatches[expandedGroup].map(match => {
-                            const { sh, sa } = simulateMatchScore(match.home, match.away);
-                            return { ...match, scoreHome: sh.toString(), scoreAway: sa.toString() };
-                          });
+              {/* Desktop View: Renders only active group details */}
+              <div className="lg:col-span-7 space-y-6 hidden lg:block">
+                {renderGroupDetails(expandedGroup)}
+              </div>
 
-                          const newGroupMatchesState = {
-                            ...groupMatches,
-                            [expandedGroup]: updatedMatchesForThisGroup
-                          };
-
-                          const localKnockoutSync = simulateFullKnockoutState(newGroupMatchesState);
-
-                          setGroupMatches(newGroupMatchesState);
-                          setKnockoutMatches(localKnockoutSync);
-
-                          if (isAdminMode) {
-                            if (isSupabaseConfigured) {
-                              await syncMatchesToSupabase(newGroupMatchesState, localKnockoutSync);
-                              setOfficialGroupMatches(newGroupMatchesState);
-                              setOfficialKnockoutMatches(localKnockoutSync);
-                            }
-                          } else {
-                            setIsSimulationMode(true);
-                            localStorage.setItem("copa_2026_group_matches", JSON.stringify(newGroupMatchesState));
-                            localStorage.setItem("copa_2026_knockout_matches", JSON.stringify(localKnockoutSync));
-                          }
-                        }}
-                        disabled={isDbSyncing}
-                        className="bg-slate-900 hover:bg-slate-850 disabled:opacity-50 text-slate-200 border border-slate-800 hover:border-slate-750 text-xs font-bold py-2 px-3.5 rounded-xl transition cursor-pointer"
-                      >
-                        Simular Grupo
-                      </button>
+              {/* Mobile View: Horizontal Scroll-snap columns for groups */}
+              <div className="lg:hidden relative -mx-4 px-4 overflow-hidden lg:col-span-7">
+                <div 
+                  ref={mobileGroupScrollContainerRef}
+                  onScroll={handleMobileGroupScroll}
+                  className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-0 pb-4 scroll-smooth"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].map(groupKey => (
+                    <div 
+                      key={groupKey} 
+                      className="w-full shrink-0 snap-center snap-always px-1" 
+                      style={{ scrollSnapStop: 'always' }}
+                      data-group={groupKey}
+                    >
+                      {renderGroupDetails(groupKey)}
                     </div>
-
-                    {/* Table of Standings */}
-                    <div className="space-y-2">
-                      <p className="text-xs md:text-sm font-bold text-slate-450 uppercase tracking-wider pl-1 flex items-center justify-between">
-                        <span>Classificação</span>
-                        <span className="text-[10px] md:text-xs text-slate-500 font-medium normal-case font-mono">
-                          (Clique na seleção para ver escalação/estrelas)
-                        </span>
-                      </p>
-                      
-                      <div 
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onTouchMove={(e) => e.stopPropagation()}
-                        onTouchEnd={(e) => e.stopPropagation()}
-                        className="overflow-x-auto no-scrollbar bg-slate-950 rounded-xl border border-slate-900 relative"
-                      >
-                        <table className="w-full text-left text-xs md:text-sm text-slate-350 min-w-[540px] lg:min-w-0 border-collapse">
-                          <thead>
-                            <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-xs select-none">
-                              <th className="py-3 pl-3 pr-2 sticky left-0 z-20 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">Seleção</th>
-                              <th className="py-3 text-center w-12 min-w-[48px] font-extrabold text-emerald-450 cursor-help" title="Pontos">PTS</th>
-                              <th className="py-3 text-center w-10 min-w-[40px] font-bold text-slate-300 cursor-help" title="Jogos (Partidas jogadas)">J</th>
-                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Vitórias">V</th>
-                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Empates">E</th>
-                              <th className="py-3 text-center w-10 min-w-[40px] cursor-help" title="Derrotas">D</th>
-                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Pró (Gols marcados)">GP</th>
-                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Gols Contra (Gols sofridos)">GC</th>
-                              <th className="py-3 text-center w-12 min-w-[48px] cursor-help" title="Saldo de Gols (Gols marcados - Gols sofridos)">SG</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/30">
-                            {groupStandings[expandedGroup].map((team, idx) => {
-                              const isQualifying = idx < 2;
-                              const isBestThirdCandidate = idx === 2;
-                              return (
-                                <tr 
-                                  key={team.id}
-                                  className={`hover:bg-slate-900/30 transition duration-150 ${
-                                    isQualifying ? "bg-emerald-500/[0.005]" : ""
-                                  }`}
-                                >
-                                  <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className={`w-1 h-5 rounded-full shrink-0 ${
-                                        isQualifying 
-                                          ? "bg-emerald-500" 
-                                          : isBestThirdCandidate 
-                                            ? "bg-yellow-500/40" 
-                                            : "bg-transparent"
-                                      }`}></span>
-                                      <span className="font-mono text-xs text-slate-500 shrink-0">{idx + 1}º</span>
-                                      <TeamFlag teamId={team.id} />
-                                      <button 
-                                        onClick={() => setSelectedTeam(team.id)}
-                                        className="font-bold text-slate-100 hover:text-emerald-400 transition-colors text-left truncate cursor-pointer focus:outline-hidden"
-                                      >
-                                        {team.name}
-                                      </button>
-                                    </div>
-                                  </td>
-                                  <td className={`py-3.5 text-center font-extrabold font-mono text-sm md:text-base ${
-                                    isQualifying ? "text-emerald-450" : "text-slate-200"
-                                  }`}>{team.pts}</td>
-                                  <td className="py-3.5 text-center font-mono font-semibold text-slate-300">{team.j}</td>
-                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.v}</td>
-                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.e}</td>
-                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.d}</td>
-                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.gp}</td>
-                                  <td className="py-3.5 text-center font-mono text-slate-400">{team.gc}</td>
-                                  <td className={`py-3.5 text-center font-mono font-bold ${
-                                    team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-450"
-                                  }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 pt-1.5 pl-1.5">
-                      <div className="flex gap-4 text-xs md:text-sm text-slate-400">
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
-                        </span>
-                      </div>
-                      
-                      {/* Explicação das siglas da classificação */}
-                      <div className="mt-1.5 p-3 rounded-xl bg-slate-900/30 border border-slate-900/50 text-[10px] md:text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1.5 leading-none">
-                        <span><strong>J:</strong> Jogos</span>
-                        <span><strong>V:</strong> Vitórias</span>
-                        <span><strong>E:</strong> Empates</span>
-                        <span><strong>D:</strong> Derrotas</span>
-                        <span><strong>GP:</strong> Gols Pró (Marcados)</span>
-                        <span><strong>GC:</strong> Gols Contra (Sofridos)</span>
-                        <span><strong>SG:</strong> Saldo de Gols</span>
-                        <span><strong>PTS:</strong> Pontos</span>
-                      </div>
-                    </div>
-
-                    {/* Group Matches Calendar List */}
-                    <div className="space-y-3.5 pt-4">
-                      <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">
-                        Calendário & Jogos
-                      </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                        {groupMatches[expandedGroup].map((match) => {
-                          const homeTeam = teamMap[match.home] || { name: match.home, flag: "" };
-                          const awayTeam = teamMap[match.away] || { name: match.away, flag: "" };
-                          const showResults = match.scoreHome !== "" && match.scoreAway !== "";
-                          
-                          // Calculate Brasilia Time
-                          const brTime = getBrasiliaTime(match.localTime, match.fuso);
-                          
-                          return (
-                            <div 
-                              key={match.id}
-                              onClick={() => openEditMatch(match, "group", expandedGroup)}
-                              className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3.5 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-sm"
-                            >
-                              {/* Match header info */}
-                              <div className="flex justify-between items-center text-xs md:text-sm text-slate-400 border-b border-slate-950 pb-2 mb-3">
-                                <span className="font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900">
-                                  {match.round}
-                                </span>
-                                <span className="text-slate-500 font-medium">
-                                  {match.date}
-                                </span>
-                              </div>
-                              
-                              {/* Scoreline */}
-                              <div className="flex justify-between items-center gap-3 py-1.5">
-                                <div className="flex items-center gap-2 max-w-[42%] truncate">
-                                  <TeamFlag teamId={match.home} />
-                                  <span className="font-bold text-sm md:text-base text-slate-100 truncate">{homeTeam.name}</span>
-                                </div>
-                                
-                                <div className="flex items-center gap-1 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-950">
-                                  {showResults ? (
-                                    <>
-                                      <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreHome}</span>
-                                      <span className="text-slate-600 font-semibold px-0.5">-</span>
-                                      <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreAway}</span>
-                                    </>
-                                  ) : (
-                                    <span className="text-xs font-bold text-emerald-400 uppercase px-1 py-0.5">Editar</span>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
-                                  <span className="font-bold text-sm md:text-base text-slate-100 truncate">{awayTeam.name}</span>
-                                  <TeamFlag teamId={match.away} />
-                                </div>
-                              </div>
-                              
-                              {/* Timezone display & venue */}
-                              <div className="mt-3.5 pt-2 border-t border-slate-950 flex flex-col gap-1 text-xs md:text-sm text-slate-400 group-hover:text-slate-350 transition">
-                                <div className="flex items-center justify-between text-slate-500">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3 text-emerald-500/70" /> 
-                                    <span>Brasília: <strong className="text-slate-300 font-bold">{brTime}</strong></span>
-                                  </span>
-                                  <span>Local: <strong className="text-slate-350">{match.localTime} ({match.fuso})</strong></span>
-                                </div>
-                                <div className="flex items-center gap-1 text-xs md:text-sm text-slate-500">
-                                  <MapPin className="w-2.5 h-2.5" />
-                                  <span className="truncate">{match.estadio} ({match.cidade})</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -2233,7 +2319,7 @@ export default function App() {
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
                   {/* 32-avos (R32) Column */}
-                  <div className="w-full shrink-0 snap-center px-1" data-phase="R32">
+                  <div className="w-full shrink-0 snap-center snap-always px-1" style={{ scrollSnapStop: 'always' }} data-phase="R32">
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">32-avos de Final</p>
                       <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
@@ -2245,7 +2331,7 @@ export default function App() {
                   </div>
 
                   {/* Oitavas (R16) Column */}
-                  <div className="w-full shrink-0 snap-center px-1" data-phase="R16">
+                  <div className="w-full shrink-0 snap-center snap-always px-1" style={{ scrollSnapStop: 'always' }} data-phase="R16">
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Oitavas de Final</p>
                       <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
@@ -2257,7 +2343,7 @@ export default function App() {
                   </div>
 
                   {/* Quartas (QF) Column */}
-                  <div className="w-full shrink-0 snap-center px-1" data-phase="QF">
+                  <div className="w-full shrink-0 snap-center snap-always px-1" style={{ scrollSnapStop: 'always' }} data-phase="QF">
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Quartas de Final</p>
                       <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
@@ -2269,7 +2355,7 @@ export default function App() {
                   </div>
 
                   {/* Semifinais (SF) Column */}
-                  <div className="w-full shrink-0 snap-center px-1" data-phase="SF">
+                  <div className="w-full shrink-0 snap-center snap-always px-1" style={{ scrollSnapStop: 'always' }} data-phase="SF">
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Semifinais</p>
                       <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
@@ -2281,7 +2367,7 @@ export default function App() {
                   </div>
 
                   {/* Decisões (FI / T3) Column */}
-                  <div className="w-full shrink-0 snap-center px-1" data-phase="FI">
+                  <div className="w-full shrink-0 snap-center snap-always px-1" style={{ scrollSnapStop: 'always' }} data-phase="FI">
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center border-b border-slate-900 pb-2 mb-2">Decisões</p>
                       <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
