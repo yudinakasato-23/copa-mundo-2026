@@ -1611,21 +1611,22 @@ export default function App() {
                     </div>
 
                     {/* Table of Standings */}
-                    <div className="space-y-2">
+                    {/* Desktop View: Full Standings Table */}
+                    <div className="hidden lg:block space-y-2">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">Classificação</p>
-                      <div className="overflow-x-auto no-scrollbar">
+                      <div className="overflow-x-auto no-scrollbar bg-slate-950/40 rounded-xl border border-slate-900 p-2">
                         <table className="w-full text-left text-xs text-slate-300">
                           <thead>
                             <tr className="text-slate-500 border-b border-slate-900 pb-2 font-bold uppercase tracking-wider text-[9px]">
-                              <th className="py-2.5 pl-2">Seleção</th>
-                              <th className="py-2.5 text-center w-8">J</th>
-                              <th className="py-2.5 text-center w-8">V</th>
-                              <th className="py-2.5 text-center w-8">E</th>
-                              <th className="py-2.5 text-center w-8">D</th>
-                              <th className="py-2.5 text-center w-10">GP</th>
-                              <th className="py-2.5 text-center w-10">GC</th>
-                              <th className="py-2.5 text-center w-10">SG</th>
-                              <th className="py-2.5 text-center pr-2 w-12 font-bold text-slate-400">PTS</th>
+                              <th className="py-2 pl-2">Seleção</th>
+                              <th className="py-2 text-center w-8">J</th>
+                              <th className="py-2 text-center w-8">V</th>
+                              <th className="py-2 text-center w-8">E</th>
+                              <th className="py-2 text-center w-8">D</th>
+                              <th className="py-2 text-center w-10">GP</th>
+                              <th className="py-2 text-center w-10">GC</th>
+                              <th className="py-2 text-center w-10">SG</th>
+                              <th className="py-2 text-center pr-2 w-12 font-bold text-slate-400">PTS</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900/30">
@@ -1639,28 +1640,30 @@ export default function App() {
                                     isQualifying ? "bg-emerald-500/[0.01]" : ""
                                   }`}
                                 >
-                                  <td className="py-3 pl-2 flex items-center gap-2 font-medium">
-                                    <span className={`w-1 h-5 rounded-full ${
-                                      isQualifying 
-                                        ? "bg-emerald-500" 
-                                        : isBestThirdCandidate 
-                                          ? "bg-yellow-500/40" 
-                                          : "bg-transparent"
-                                    }`}></span>
-                                    <span className="font-mono text-[10px] text-slate-500">{idx + 1}º</span>
-                                    <TeamFlag teamId={team.id} />
-                                    <span className="font-bold text-slate-100">{team.name}</span>
+                                  <td className="py-2.5 pl-2 font-medium">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className={`w-1 h-5 rounded-full shrink-0 ${
+                                        isQualifying 
+                                          ? "bg-emerald-500" 
+                                          : isBestThirdCandidate 
+                                            ? "bg-yellow-500/40" 
+                                            : "bg-transparent"
+                                      }`}></span>
+                                      <span className="font-mono text-[10px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                      <TeamFlag teamId={team.id} />
+                                      <span className="font-bold text-slate-100 truncate">{team.name}</span>
+                                    </div>
                                   </td>
-                                  <td className="py-3 text-center font-mono">{team.j}</td>
-                                  <td className="py-3 text-center font-mono text-slate-400">{team.v}</td>
-                                  <td className="py-3 text-center font-mono text-slate-400">{team.e}</td>
-                                  <td className="py-3 text-center font-mono text-slate-400">{team.d}</td>
-                                  <td className="py-3 text-center font-mono text-slate-400">{team.gp}</td>
-                                  <td className="py-3 text-center font-mono text-slate-400">{team.gc}</td>
-                                  <td className={`py-3 text-center font-mono font-bold ${
+                                  <td className="py-2.5 text-center font-mono">{team.j}</td>
+                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.v}</td>
+                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.e}</td>
+                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.d}</td>
+                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.gp}</td>
+                                  <td className="py-2.5 text-center font-mono text-slate-400">{team.gc}</td>
+                                  <td className={`py-2.5 text-center font-mono font-bold ${
                                     team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-400"
                                   }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
-                                  <td className={`py-3 text-center font-extrabold pr-2 font-mono text-sm ${
+                                  <td className={`py-2.5 text-center font-extrabold pr-2 font-mono text-sm ${
                                     isQualifying ? "text-emerald-400" : "text-slate-200"
                                   }`}>{team.pts}</td>
                                 </tr>
@@ -1669,15 +1672,135 @@ export default function App() {
                           </tbody>
                         </table>
                       </div>
-                      
-                      <div className="flex gap-4 text-[10px] text-slate-400 pt-1.5 pl-1.5">
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
-                        </span>
+                    </div>
+
+                    {/* Mobile/Tablet View: Interactive 3D Flip Card Standings */}
+                    <div className="lg:hidden space-y-2.5">
+                      <div className="flex justify-between items-center pl-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Classificação</p>
+                        <button 
+                          onClick={() => setIsTableFlipped(!isTableFlipped)}
+                          className="text-[9px] font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
+                        >
+                          <RotateCcw className="w-3 h-3 text-emerald-500" />
+                          {isTableFlipped ? "Ver Classificação" : "Ver Detalhes (V/E/D)"}
+                        </button>
                       </div>
+
+                      <div className={`flip-card w-full ${isTableFlipped ? 'flipped' : ''}`}>
+                        <div className="flip-card-inner relative w-full h-[174px]">
+                          
+                          {/* FRONT: Simplified Table (Seleção | J | SG | PTS) */}
+                          <div className="flip-card-front absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
+                            <table className="w-full text-left text-xs text-slate-300">
+                              <thead>
+                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-[9px]">
+                                  <th className="py-1.5 pl-1">Seleção</th>
+                                  <th className="py-1.5 text-center w-10">J</th>
+                                  <th className="py-1.5 text-center w-12">SG</th>
+                                  <th className="py-1.5 text-center pr-1 w-14 font-bold text-slate-400">PTS</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/20">
+                                {groupStandings[expandedGroup].map((team, idx) => {
+                                  const isQualifying = idx < 2;
+                                  const isBestThirdCandidate = idx === 2;
+                                  return (
+                                    <tr 
+                                      key={team.id}
+                                      className={`hover:bg-slate-900/20 transition duration-150 ${
+                                        isQualifying ? "bg-emerald-500/[0.005]" : ""
+                                      }`}
+                                    >
+                                      <td className="py-2 pl-1 font-medium">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className={`w-0.5 h-4 rounded-full shrink-0 ${
+                                            isQualifying 
+                                              ? "bg-emerald-500" 
+                                              : isBestThirdCandidate 
+                                                ? "bg-yellow-500/40" 
+                                                : "bg-transparent"
+                                          }`}></span>
+                                          <span className="font-mono text-[9px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                          <TeamFlag teamId={team.id} />
+                                          <span className="font-bold text-slate-100 truncate max-w-[130px]">{team.name}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-2 text-center font-mono text-slate-300">{team.j}</td>
+                                      <td className={`py-2 text-center font-mono font-bold ${
+                                        team.sg > 0 ? "text-emerald-400" : team.sg < 0 ? "text-rose-400" : "text-slate-400"
+                                      }`}>{team.sg > 0 ? `+${team.sg}` : team.sg}</td>
+                                      <td className={`py-2 text-center font-extrabold pr-1 font-mono text-sm ${
+                                        isQualifying ? "text-emerald-400" : "text-slate-200"
+                                      }`}>{team.pts}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* BACK: Detailed Stats Table (Seleção | V | E | D | GP | GC) */}
+                          <div className="flip-card-back absolute top-0 left-0 w-full h-full bg-slate-950/40 rounded-2xl border border-slate-900/60 p-3 shadow-inner flex flex-col justify-between">
+                            <table className="w-full text-left text-xs text-slate-300">
+                              <thead>
+                                <tr className="text-slate-500 border-b border-slate-900 pb-1.5 font-bold uppercase tracking-wider text-[9px]">
+                                  <th className="py-1.5 pl-1">Seleção</th>
+                                  <th className="py-1.5 text-center w-8">V</th>
+                                  <th className="py-1.5 text-center w-8">E</th>
+                                  <th className="py-1.5 text-center w-8">D</th>
+                                  <th className="py-1.5 text-center w-9">GP</th>
+                                  <th className="py-1.5 text-center pr-1 w-9">GC</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/20">
+                                {groupStandings[expandedGroup].map((team, idx) => {
+                                  const isQualifying = idx < 2;
+                                  const isBestThirdCandidate = idx === 2;
+                                  return (
+                                    <tr 
+                                      key={team.id}
+                                      className={`hover:bg-slate-900/20 transition duration-150 ${
+                                        isQualifying ? "bg-emerald-500/[0.005]" : ""
+                                      }`}
+                                    >
+                                      <td className="py-2 pl-1 font-medium">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className={`w-0.5 h-4 rounded-full shrink-0 ${
+                                            isQualifying 
+                                              ? "bg-emerald-500" 
+                                              : isBestThirdCandidate 
+                                                ? "bg-yellow-500/40" 
+                                                : "bg-transparent"
+                                          }`}></span>
+                                          <span className="font-mono text-[9px] text-slate-500 shrink-0">{idx + 1}º</span>
+                                          <TeamFlag teamId={team.id} />
+                                          <span className="font-bold text-slate-100 truncate max-w-[100px]">{team.name}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-2 text-center font-mono text-slate-400">{team.v}</td>
+                                      <td className="py-2 text-center font-mono text-slate-400">{team.e}</td>
+                                      <td className="py-2 text-center font-mono text-slate-400">{team.d}</td>
+                                      <td className="py-2 text-center font-mono text-emerald-500/80">{team.gp}</td>
+                                      <td className="py-2 text-center pr-1 font-mono text-rose-500/80">{team.gc}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 text-[10px] text-slate-400 pt-1.5 pl-1.5">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Classifica direto (Top 2)
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></span> Disputa vaga de 3º lugar
+                      </span>
                     </div>
 
                     {/* Group Matches Calendar List */}
