@@ -2559,7 +2559,7 @@ export default function App() {
           {/* Sheet container */}
           <div 
             ref={matchSwipe.containerRef}
-            className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-6 flex flex-col gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar overscroll-contain"
+            className="w-full lg:max-w-lg bg-slate-950 lg:rounded-2xl border border-slate-900 p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 relative z-10 bottom-sheet-container open shadow-2xl safe-bottom max-h-[90vh] overflow-y-auto no-scrollbar overscroll-contain"
             style={{
               transform: `translateY(${matchSwipe.dragY}px)`,
               transition: matchSwipe.isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.94, 0.6, 1)'
@@ -2588,7 +2588,7 @@ export default function App() {
             </div>
 
             {/* Stadium / Timezone Summary card */}
-            <div className="bg-slate-900/60 border border-slate-900/80 p-3.5 rounded-xl flex items-start gap-3 text-xs">
+            <div className="bg-slate-900/60 border border-slate-900/80 p-3 sm:p-3.5 rounded-xl flex items-start gap-2.5 sm:gap-3 text-xs">
               <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
               <div className="space-y-1.5 flex-1 text-[11px] text-slate-400">
                 <p className="font-bold text-slate-200">
@@ -2625,40 +2625,40 @@ export default function App() {
 
             {/* Score editing core */}
             {selectedMatch.home && selectedMatch.away ? (
-              <div className="space-y-5">
-                <div className="flex justify-between items-center gap-2">
+              <div className="space-y-4 sm:space-y-5">
+                <div className="flex justify-between items-center gap-1.5 sm:gap-2">
                   
                   {/* Home Team */}
-                  <div className="flex-1 flex flex-col items-center gap-2 text-center max-w-[40%]">
-                    <TeamFlag teamId={selectedMatch.home} className="w-14 h-10 object-cover rounded shadow-md" />
-                    <span className="font-extrabold text-xs text-slate-100 truncate w-full">
+                  <div className="flex-1 flex flex-col items-center gap-1 sm:gap-2 text-center max-w-[35%] sm:max-w-[40%] min-w-0">
+                    <TeamFlag teamId={selectedMatch.home} className="w-10 h-7 sm:w-14 sm:h-10 object-cover rounded shadow-md shrink-0" />
+                    <span className="font-extrabold text-[10px] sm:text-xs text-slate-100 truncate w-full">
                       {teamMap[selectedMatch.home]?.name}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">Rating: {TEAM_RATINGS[selectedMatch.home]}</span>
+                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono shrink-0">Rating: {TEAM_RATINGS[selectedMatch.home]}</span>
                   </div>
 
                   {/* Inputs and Counters */}
-                  <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800">
+                  <div className="flex items-center gap-1 sm:gap-2 bg-slate-900 p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-800 shrink-0">
                     
                     {/* Home Incrementers */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5 sm:gap-1">
                       <button 
                         onClick={() => {
                           const val = parseInt(editingScoreHome, 10) || 0;
                           setEditingScoreHome((val + 1).toString());
                         }}
-                        className="p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
+                        className="p-0.5 sm:p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                       <button 
                         onClick={() => {
                           const val = parseInt(editingScoreHome, 10) || 0;
                           setEditingScoreHome(Math.max(0, val - 1).toString());
                         }}
-                        className="p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
+                        className="p-0.5 sm:p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
 
@@ -2669,10 +2669,10 @@ export default function App() {
                       value={editingScoreHome}
                       onChange={(e) => setEditingScoreHome(e.target.value.replace(/\D/g, '').slice(0, 2))}
                       placeholder="0"
-                      className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-9 h-11 sm:w-12 sm:h-14 bg-slate-950 border border-slate-800 rounded-lg sm:rounded-xl text-center text-lg sm:text-xl font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                     
-                    <span className="text-slate-600 font-black text-lg px-0.5">:</span>
+                    <span className="text-slate-600 font-black text-base sm:text-lg px-0.5">:</span>
                     
                     <input 
                       type="text" 
@@ -2681,40 +2681,40 @@ export default function App() {
                       value={editingScoreAway}
                       onChange={(e) => setEditingScoreAway(e.target.value.replace(/\D/g, '').slice(0, 2))}
                       placeholder="0"
-                      className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-9 h-11 sm:w-12 sm:h-14 bg-slate-950 border border-slate-800 rounded-lg sm:rounded-xl text-center text-lg sm:text-xl font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
 
                     {/* Away Incrementers */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5 sm:gap-1">
                       <button 
                         onClick={() => {
                           const val = parseInt(editingScoreAway, 10) || 0;
                           setEditingScoreAway((val + 1).toString());
                         }}
-                        className="p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
+                        className="p-0.5 sm:p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                       <button 
                         onClick={() => {
                           const val = parseInt(editingScoreAway, 10) || 0;
                           setEditingScoreAway(Math.max(0, val - 1).toString());
                         }}
-                        className="p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
+                        className="p-0.5 sm:p-1 rounded bg-slate-950 hover:bg-slate-850 border border-slate-900 text-slate-300 cursor-pointer"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
 
                   </div>
 
                   {/* Away Team */}
-                  <div className="flex-1 flex flex-col items-center gap-2 text-center max-w-[40%]">
-                    <TeamFlag teamId={selectedMatch.away} className="w-14 h-10 object-cover rounded shadow-md" />
-                    <span className="font-extrabold text-xs text-slate-100 truncate w-full">
+                  <div className="flex-1 flex flex-col items-center gap-1 sm:gap-2 text-center max-w-[35%] sm:max-w-[40%] min-w-0">
+                    <TeamFlag teamId={selectedMatch.away} className="w-10 h-7 sm:w-14 sm:h-10 object-cover rounded shadow-md shrink-0" />
+                    <span className="font-extrabold text-[10px] sm:text-xs text-slate-100 truncate w-full">
                       {teamMap[selectedMatch.away]?.name}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">Rating: {TEAM_RATINGS[selectedMatch.away]}</span>
+                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono shrink-0">Rating: {TEAM_RATINGS[selectedMatch.away]}</span>
                   </div>
 
                 </div>
@@ -2724,16 +2724,21 @@ export default function App() {
                  editingScoreHome !== "" && 
                  editingScoreAway !== "" && 
                  parseInt(editingScoreHome, 10) === parseInt(editingScoreAway, 10) && (
-                  <div className="bg-slate-900 border border-slate-900/60 p-4 rounded-xl space-y-3.5 transition-all">
+                  <div className="bg-slate-900 border border-slate-900/60 p-3 sm:p-4 rounded-xl space-y-3.5 transition-all">
                     <div className="text-center">
-                      <span className="text-[10px] text-amber-400 font-extrabold uppercase bg-amber-500/10 px-2 py-0.5 rounded">
+                      <span className="text-[9px] sm:text-[10px] text-amber-400 font-extrabold uppercase bg-amber-500/10 px-2 py-0.5 rounded">
                         Decisão por Pênaltis Necessária
                       </span>
                     </div>
                     
-                    <div className="flex justify-center items-center gap-4">
-                      <div className="flex flex-col items-center">
-                        <label className="text-[10px] text-slate-500 font-bold mb-1">Pênaltis {teamMap[selectedMatch.home]?.name}</label>
+                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                      <div className="flex flex-col items-center flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1.5 max-w-full">
+                          <TeamFlag teamId={selectedMatch.home} className="w-4 h-3 object-cover rounded shadow-xs shrink-0" />
+                          <span className="text-[10px] text-slate-450 font-extrabold truncate max-w-[80px] sm:max-w-[120px]">
+                            {teamMap[selectedMatch.home]?.name}
+                          </span>
+                        </div>
                         <input 
                           type="text" 
                           inputMode="numeric" 
@@ -2741,12 +2746,17 @@ export default function App() {
                           value={editingPenHome}
                           onChange={(e) => setEditingPenHome(e.target.value.replace(/\D/g, '').slice(0, 2))}
                           placeholder="5"
-                          className="w-12 h-10 bg-slate-950 border border-slate-800 rounded-lg text-center font-bold font-mono text-slate-100 focus:outline-none"
+                          className="w-10 h-9 sm:w-12 sm:h-10 bg-slate-950 border border-slate-800 rounded-lg text-center font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm sm:text-base"
                         />
                       </div>
-                      <span className="text-slate-700 font-bold mt-4">x</span>
-                      <div className="flex flex-col items-center">
-                        <label className="text-[10px] text-slate-500 font-bold mb-1">Pênaltis {teamMap[selectedMatch.away]?.name}</label>
+                      <span className="text-slate-700 font-bold self-end mb-2 sm:mb-2.5">x</span>
+                      <div className="flex flex-col items-center flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1.5 max-w-full">
+                          <TeamFlag teamId={selectedMatch.away} className="w-4 h-3 object-cover rounded shadow-xs shrink-0" />
+                          <span className="text-[10px] text-slate-450 font-extrabold truncate max-w-[80px] sm:max-w-[120px]">
+                            {teamMap[selectedMatch.away]?.name}
+                          </span>
+                        </div>
                         <input 
                           type="text" 
                           inputMode="numeric" 
@@ -2754,7 +2764,7 @@ export default function App() {
                           value={editingPenAway}
                           onChange={(e) => setEditingPenAway(e.target.value.replace(/\D/g, '').slice(0, 2))}
                           placeholder="4"
-                          className="w-12 h-10 bg-slate-950 border border-slate-800 rounded-lg text-center font-bold font-mono text-slate-100 focus:outline-none"
+                          className="w-10 h-9 sm:w-12 sm:h-10 bg-slate-950 border border-slate-800 rounded-lg text-center font-bold font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm sm:text-base"
                         />
                       </div>
                     </div>
@@ -2762,18 +2772,18 @@ export default function App() {
                 )}
 
                 {/* Panel Actions */}
-                <div className="flex gap-2.5 pt-3">
+                <div className="flex gap-2 pt-3">
                   <button 
                     onClick={simulateSingleMatchInSheet}
                     disabled={isDbSyncing}
-                    className="flex-1 bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 font-bold py-3 px-4 rounded-xl transition duration-200 cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50"
+                    className="flex-1 bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-slate-750 font-bold py-2.5 px-2 sm:py-3 sm:px-4 rounded-xl transition duration-200 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Simular Jogo
                   </button>
                   <button 
                     onClick={saveMatchScore}
                     disabled={isDbSyncing}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-3 px-4 rounded-xl transition duration-200 cursor-pointer text-xs disabled:opacity-50"
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-2.5 px-2 sm:py-3 sm:px-4 rounded-xl transition duration-200 cursor-pointer text-[11px] sm:text-xs disabled:opacity-50"
                   >
                     Confirmar
                   </button>
