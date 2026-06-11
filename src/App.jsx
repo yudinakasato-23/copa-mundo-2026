@@ -226,10 +226,22 @@ function useSwipeToClose(isOpen, onClose) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("grupos"); // "grupos" | "matamata" | "estatisticas" | "sedes"
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      return localStorage.getItem("copa2026_activeTab") || "grupos";
+    } catch (e) {
+      return "grupos";
+    }
+  }); // "grupos" | "matamata" | "estatisticas" | "sedes"
   const [groupMatches, setGroupMatches] = useState(generateInitialMatches);
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedGroup, setExpandedGroup] = useState("A");
+  const [expandedGroup, setExpandedGroup] = useState(() => {
+    try {
+      return localStorage.getItem("copa2026_expandedGroup") || "A";
+    } catch (e) {
+      return "A";
+    }
+  });
   const [isSimulating, setIsSimulating] = useState(false);
   const [isDbSyncing, setIsDbSyncing] = useState(false);
   const [isTableFlipped, setIsTableFlipped] = useState(false);
@@ -280,7 +292,13 @@ export default function App() {
   const touchEndY = useRef(0);
 
   // Active knockout phase selection for mobile swipe layout
-  const [activeKnockoutPhase, setActiveKnockoutPhase] = useState("R32");
+  const [activeKnockoutPhase, setActiveKnockoutPhase] = useState(() => {
+    try {
+      return localStorage.getItem("copa2026_activeKnockoutPhase") || "R32";
+    } catch (e) {
+      return "R32";
+    }
+  });
   const [selectedTeam, setSelectedTeam] = useState(null);
   const mobileKoScrollContainerRef = useRef(null);
   const [isScrollingProgrammatically, setIsScrollingProgrammatically] = useState(false);
@@ -345,19 +363,48 @@ export default function App() {
     }
   };
 
+  // Save navigation states to localStorage for persistence across reloads (F5)
+  useEffect(() => {
+    try {
+      localStorage.setItem("copa2026_activeTab", activeTab);
+    } catch (e) {
+      console.warn("Failed to save activeTab to localStorage:", e);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("copa2026_expandedGroup", expandedGroup);
+    } catch (e) {
+      console.warn("Failed to save expandedGroup to localStorage:", e);
+    }
+  }, [expandedGroup]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("copa2026_activeKnockoutPhase", activeKnockoutPhase);
+    } catch (e) {
+      console.warn("Failed to save activeKnockoutPhase to localStorage:", e);
+    }
+  }, [activeKnockoutPhase]);
+
   // Sync scroll position of groups container when activeTab or expandedGroup changes
   useEffect(() => {
     if (activeTab === "grupos" && mobileGroupScrollContainerRef.current) {
       const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
       const index = groups.indexOf(expandedGroup);
       if (index !== -1) {
-        const container = mobileGroupScrollContainerRef.current;
-        const containerWidth = container.clientWidth;
-        if (containerWidth > 0 && Math.abs(container.scrollLeft - index * containerWidth) > 5) {
-          setIsScrollingGroupProgrammatically(true);
-          container.scrollLeft = index * containerWidth;
-          setIsScrollingGroupProgrammatically(false);
-        }
+        setTimeout(() => {
+          const container = mobileGroupScrollContainerRef.current;
+          if (container) {
+            const containerWidth = container.clientWidth;
+            if (containerWidth > 0 && Math.abs(container.scrollLeft - index * containerWidth) > 5) {
+              setIsScrollingGroupProgrammatically(true);
+              container.scrollLeft = index * containerWidth;
+              setIsScrollingGroupProgrammatically(false);
+            }
+          }
+        }, 50);
       }
     }
   }, [activeTab, expandedGroup]);
@@ -440,7 +487,7 @@ export default function App() {
         }, 50);
       }
     }
-  }, [activeTab]);
+  }, [activeTab, activeKnockoutPhase]);
 
   // Knockout stage matches structure
   const [knockoutMatches, setKnockoutMatches] = useState({
