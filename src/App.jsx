@@ -225,6 +225,92 @@ function useSwipeToClose(isOpen, onClose) {
   };
 }
 
+// Calendar Event Helper Functions
+const getUTCDateTime = (dateStr, timeStr, fusoStr) => {
+  if (!dateStr || !timeStr) return new Date();
+  const [day, month, year] = dateStr.split("/").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  
+  let offsetHours = 3; // Default offset is Brasília (UTC-3), so +3 to get to UTC
+  if (fusoStr && fusoStr.startsWith("UTC")) {
+    const offsetPart = fusoStr.replace("UTC", "").trim();
+    if (offsetPart) {
+      offsetHours = -parseInt(offsetPart, 10);
+    } else {
+      offsetHours = 0;
+    }
+  }
+  return new Date(Date.UTC(year, month - 1, day, hour + offsetHours, minute));
+};
+
+const formatUTCForCalendar = (dateObj) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  const y = dateObj.getUTCFullYear();
+  const m = pad(dateObj.getUTCMonth() + 1);
+  const d = pad(dateObj.getUTCDate());
+  const h = pad(dateObj.getUTCHours());
+  const min = pad(dateObj.getUTCMinutes());
+  const s = pad(dateObj.getUTCSeconds());
+  return `${y}${m}${d}T${h}${min}${s}Z`;
+};
+
+const generateGoogleCalendarUrl = (match, homeName, awayName) => {
+  const startObj = getUTCDateTime(match.date, match.localTime, match.fuso);
+  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
+  
+  const dates = `${formatUTCForCalendar(startObj)}/${formatUTCForCalendar(endObj)}`;
+  const title = encodeURIComponent(`Copa 2026: ${homeName} x ${awayName}`);
+  const details = encodeURIComponent(
+    `Jogo da Copa do Mundo 2026\nFase: ${match.stageName}\nEstádio: ${match.estadio}\nCidade: ${match.cidade}`
+  );
+  const location = encodeURIComponent(`${match.estadio}, ${match.cidade}, ${match.pais}`);
+  
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+};
+
+const downloadIcsFile = (match, homeName, awayName) => {
+  const startObj = getUTCDateTime(match.date, match.localTime, match.fuso);
+  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
+  
+  const startStr = formatUTCForCalendar(startObj);
+  const endStr = formatUTCForCalendar(endObj);
+  
+  const title = `Copa 2026: ${homeName} x ${awayName}`;
+  const description = `Jogo da Copa do Mundo 2026\\nFase: ${match.stageName}\\nEstádio: ${match.estadio}\\nCidade: ${match.cidade}`;
+  const location = `${match.estadio}, ${match.cidade}, ${match.pais}`;
+  
+  const icsLines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Antigravity Copa 2026//NONSGML v1.0//PT",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `DTSTART:${startStr}`,
+    `DTEND:${endStr}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    `UID:match-2026-${match.id}@copa2026.app`,
+    "SEQUENCE:0",
+    "STATUS:CONFIRMED",
+    "TRANSP:OPAQUE",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ];
+  
+  const icsString = icsLines.join("\r\n");
+  const blob = new Blob([icsString], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `jogo_${match.id}_${homeName.replace(/\s+/g, '_')}_x_${awayName.replace(/\s+/g, '_')}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -232,9 +318,12 @@ export default function App() {
     } catch (e) {
       return "grupos";
     }
-  }); // "grupos" | "matamata" | "estatisticas" | "sedes"
+  }); // "grupos" | "calendario" | "matamata" | "estatisticas" | "sedes"
   const [groupMatches, setGroupMatches] = useState(generateInitialMatches);
   const [searchTerm, setSearchTerm] = useState("");
+  const [calendarStageFilter, setCalendarStageFilter] = useState("all");
+  const [calendarStatusFilter, setCalendarStatusFilter] = useState("all");
+  const [activeCalendarMenu, setActiveCalendarMenu] = useState(null);
   const [expandedGroup, setExpandedGroup] = useState(() => {
     try {
       return localStorage.getItem("copa2026_expandedGroup") || "A";
@@ -311,6 +400,18 @@ export default function App() {
   const mobileGroupScrollContainerRef = useRef(null);
   const [isScrollingGroupProgrammatically, setIsScrollingGroupProgrammatically] = useState(false);
 
+  const visibleGroups = useMemo(() => {
+    const allGroupKeys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+    if (!searchTerm.trim()) return allGroupKeys;
+    const query = searchTerm.toLowerCase().trim();
+    return allGroupKeys.filter(groupKey => {
+      const group = INITIAL_GROUPS_DATA[groupKey];
+      return group.teams.some(team => 
+        team.name.toLowerCase().includes(query)
+      );
+    });
+  }, [searchTerm]);
+
   const handleMobileGroupScroll = () => {
     if (isScrollingGroupProgrammatically) return;
     const container = mobileGroupScrollContainerRef.current;
@@ -321,9 +422,8 @@ export default function App() {
     if (containerWidth === 0) return;
 
     const index = Math.round(scrollLeft / containerWidth);
-    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-    if (index >= 0 && index < groups.length) {
-      const currentGroup = groups[index];
+    if (index >= 0 && index < visibleGroups.length) {
+      const currentGroup = visibleGroups[index];
       if (expandedGroup !== currentGroup) {
         setExpandedGroup(currentGroup);
         
@@ -347,8 +447,7 @@ export default function App() {
     const container = mobileGroupScrollContainerRef.current;
     if (!container) return;
 
-    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-    const index = groups.indexOf(groupId);
+    const index = visibleGroups.indexOf(groupId);
     if (index !== -1) {
       setIsScrollingGroupProgrammatically(true);
       const containerWidth = container.clientWidth;
@@ -390,7 +489,7 @@ export default function App() {
 
   // Auto-focus the first matching group when searching
   useEffect(() => {
-    if (searchTerm.trim() !== "") {
+    if (activeTab === "grupos" && searchTerm.trim() !== "") {
       const matchQuery = searchTerm.toLowerCase();
       const firstMatchingGroupKey = Object.keys(INITIAL_GROUPS_DATA).find(groupKey =>
         INITIAL_GROUPS_DATA[groupKey].teams.some(team =>
@@ -406,13 +505,12 @@ export default function App() {
         }
       }
     }
-  }, [searchTerm, expandedGroup]);
+  }, [activeTab, searchTerm, expandedGroup]);
 
-  // Sync scroll position of groups container when activeTab or expandedGroup changes
+  // Sync scroll position of groups container when activeTab, expandedGroup or searchTerm changes
   useEffect(() => {
     if (activeTab === "grupos" && mobileGroupScrollContainerRef.current) {
-      const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-      const index = groups.indexOf(expandedGroup);
+      const index = visibleGroups.indexOf(expandedGroup);
       if (index !== -1) {
         setTimeout(() => {
           const container = mobileGroupScrollContainerRef.current;
@@ -427,7 +525,7 @@ export default function App() {
         }, 50);
       }
     }
-  }, [activeTab, expandedGroup]);
+  }, [activeTab, expandedGroup, searchTerm, visibleGroups]);
 
   // Lock body scroll when a modal is open to prevent background page from scrolling
   useEffect(() => {
@@ -439,6 +537,17 @@ export default function App() {
       };
     }
   }, [selectedMatch, selectedTeam]);
+
+  // Close calendar menu when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveCalendarMenu(null);
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, []);
 
   const handleMobileKoScroll = () => {
     if (isScrollingProgrammatically) return;
@@ -536,6 +645,187 @@ export default function App() {
     });
     return map;
   }, []);
+
+  const R32_PLACEHOLDERS = useMemo(() => [
+    { home: "1º Grupo A", away: "3º Colocado Rank 1" },
+    { home: "2º Grupo B", away: "2º Grupo C" },
+    { home: "1º Grupo C", away: "3º Colocado Rank 2" },
+    { home: "2º Grupo D", away: "2º Grupo E" },
+    { home: "1º Grupo E", away: "3º Colocado Rank 3" },
+    { home: "2º Grupo F", away: "2º Grupo G" },
+    { home: "1º Grupo G", away: "3º Colocado Rank 4" },
+    { home: "2º Grupo H", away: "2º Grupo I" },
+    { home: "1º Grupo I", away: "3º Colocado Rank 5" },
+    { home: "2º Grupo J", away: "2º Grupo K" },
+    { home: "1º Grupo K", away: "3º Colocado Rank 6" },
+    { home: "2º Grupo L", away: "2º Grupo A" },
+    { home: "1º Grupo B", away: "3º Colocado Rank 7" },
+    { home: "1º Grupo D", away: "3º Colocado Rank 8" },
+    { home: "1º Grupo F", away: "1º Grupo H" },
+    { home: "1º Grupo J", away: "1º Grupo L" }
+  ], []);
+
+  const getPlaceholderName = (matchId, role) => {
+    const parts = matchId.split("-");
+    const stage = parts[0];
+    const idx = parseInt(parts[1], 10) - 1;
+    
+    if (stage === "R32") {
+      const ph = R32_PLACEHOLDERS[idx];
+      return ph ? ph[role] : role === "home" ? "Equipe A" : "Equipe B";
+    }
+    if (stage === "R16") {
+      const matchNum = idx * 2 + (role === "home" ? 1 : 2);
+      return `Vencedor R32-${matchNum}`;
+    }
+    if (stage === "QF") {
+      const matchNum = idx * 2 + (role === "home" ? 1 : 2);
+      return `Vencedor Oitavas ${matchNum}`;
+    }
+    if (stage === "SF") {
+      const matchNum = idx * 2 + (role === "home" ? 1 : 2);
+      return `Vencedor Quartas ${matchNum}`;
+    }
+    if (stage === "T3") {
+      return role === "home" ? "Perdedor Semifinal 1" : "Perdedor Semifinal 2";
+    }
+    if (stage === "FI") {
+      return role === "home" ? "Vencedor Semifinal 1" : "Vencedor Semifinal 2";
+    }
+    return role === "home" ? "Equipe A" : "Equipe B";
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+    
+    if (activeTab === "grupos") {
+      const matchQuery = searchTerm.toLowerCase().trim();
+      if (!matchQuery) return;
+      
+      const firstMatchingGroupKey = Object.keys(INITIAL_GROUPS_DATA).find(groupKey =>
+        INITIAL_GROUPS_DATA[groupKey].teams.some(team =>
+          team.name.toLowerCase().includes(matchQuery)
+        )
+      );
+      
+      if (firstMatchingGroupKey) {
+        setExpandedGroup(firstMatchingGroupKey);
+        setTimeout(() => {
+          const element = document.getElementById("active-group-details-section");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      }
+    } else if (activeTab === "calendario") {
+      const matchQuery = searchTerm.toLowerCase().trim();
+      if (!matchQuery) return;
+      
+      setTimeout(() => {
+        const highlightedMatch = document.querySelector(".match-card-highlighted");
+        if (highlightedMatch) {
+          highlightedMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+    }
+  };
+
+  const allMatches = useMemo(() => {
+    const list = [];
+
+    // Add all Group matches
+    Object.keys(groupMatches).forEach(groupKey => {
+      groupMatches[groupKey].forEach(match => {
+        list.push({
+          ...match,
+          isKnockout: false,
+          stageName: `Grupo ${groupKey}`,
+          stageKey: "group",
+          groupKey
+        });
+      });
+    });
+
+    // Add all Knockout matches
+    const stageNames = {
+      R32: "32-avos de Final",
+      R16: "Oitavas de Final",
+      QF: "Quartas de Final",
+      SF: "Semifinal",
+      T3: "Terceiro Lugar",
+      FI: "Final"
+    };
+
+    Object.keys(knockoutMatches).forEach(stageKey => {
+      knockoutMatches[stageKey].forEach(match => {
+        const sched = KNOCKOUT_SCHEDULE_DATA[match.id] || {};
+        list.push({
+          ...match,
+          ...sched,
+          isKnockout: true,
+          stageName: stageNames[stageKey] || stageKey,
+          stageKey
+        });
+      });
+    });
+
+    const parseDateTime = (dateStr, timeStr) => {
+      if (!dateStr) return 0;
+      const [day, month, year] = dateStr.split("/").map(Number);
+      const [hour, minute] = (timeStr || "00:00").split(":").map(Number);
+      return new Date(year, month - 1, day, hour, minute).getTime();
+    };
+
+    list.sort((a, b) => {
+      const timeA = parseDateTime(a.date, a.localTime);
+      const timeB = parseDateTime(b.date, b.localTime);
+      if (timeA !== timeB) return timeA - timeB;
+      return a.id.localeCompare(b.id);
+    });
+
+    return list;
+  }, [groupMatches, knockoutMatches]);
+
+  const filteredMatches = useMemo(() => {
+    return allMatches.filter(match => {
+      const homeName = match.home ? (teamMap[match.home]?.name || match.home) : getPlaceholderName(match.id, "home");
+      const awayName = match.away ? (teamMap[match.away]?.name || match.away) : getPlaceholderName(match.id, "away");
+      
+      // 1. Search term filter
+      if (searchTerm.trim() !== "") {
+        const query = searchTerm.toLowerCase().trim();
+        const matchesHome = homeName.toLowerCase().includes(query);
+        const matchesAway = awayName.toLowerCase().includes(query);
+        const matchesRound = match.round?.toLowerCase().includes(query) || match.stageName?.toLowerCase().includes(query);
+        const matchesVenue = match.estadio?.toLowerCase().includes(query) || match.cidade?.toLowerCase().includes(query);
+        
+        if (!matchesHome && !matchesAway && !matchesRound && !matchesVenue) {
+          return false;
+        }
+      }
+
+      // 2. Stage filter
+      if (calendarStageFilter !== "all") {
+        if (calendarStageFilter === "group" && match.isKnockout) return false;
+        if (calendarStageFilter === "R32" && match.stageKey !== "R32") return false;
+        if (calendarStageFilter === "R16" && match.stageKey !== "R16") return false;
+        if (calendarStageFilter === "QF" && match.stageKey !== "QF") return false;
+        if (calendarStageFilter === "finals" && !["SF", "T3", "FI"].includes(match.stageKey)) return false;
+      }
+
+      // 3. Status filter
+      const hasPlayed = match.scoreHome !== "" && match.scoreAway !== "";
+      if (calendarStatusFilter !== "all") {
+        if (calendarStatusFilter === "played" && !hasPlayed) return false;
+        if (calendarStatusFilter === "scheduled" && hasPlayed) return false;
+      }
+
+      return true;
+    });
+  }, [allMatches, searchTerm, calendarStageFilter, calendarStatusFilter, teamMap]);
 
   // Sync state to Supabase in batches (helper function)
   const syncMatchesToSupabase = async (gMatches, kMatches) => {
@@ -2000,6 +2290,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 flex space-x-2 py-3.5">
           {[
             { id: "grupos", label: "Fase de Grupos", icon: Users },
+            { id: "calendario", label: "Calendário Completo", icon: Calendar },
             { id: "matamata", label: "Chaveamento Mata-Mata", icon: Trophy },
             { id: "estatisticas", label: "Estatísticas & Regras", icon: BarChart2 },
             { id: "sedes", label: "Sedes & Estádios", icon: MapPin }
@@ -2088,16 +2379,25 @@ export default function App() {
                 </p>
               </div>
               
-              <div className="relative w-full md:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+              <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                 <input 
                   type="text" 
                   placeholder="Buscar país..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                 />
-              </div>
+                {searchTerm && (
+                  <button 
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </form>
             </div>
 
             {/* Quick Groups Pills Scroller (Mobile UI / Scroll horizontal - Sticky and Fade arrows) */}
@@ -2115,13 +2415,7 @@ export default function App() {
                   ref={groupScrollRef}
                   className="flex overflow-x-auto no-scrollbar gap-2"
                 >
-                  {Object.keys(INITIAL_GROUPS_DATA).filter(groupKey => {
-                    if (!searchTerm) return true;
-                    const group = INITIAL_GROUPS_DATA[groupKey];
-                    return group.teams.some(team => 
-                      team.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                  }).map(groupKey => {
+                  {visibleGroups.map(groupKey => {
                     const isSelected = expandedGroup === groupKey;
                     return (
                       <button
@@ -2149,7 +2443,7 @@ export default function App() {
             </div>
 
             {/* Main Double Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div id="active-group-details-section" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
               {/* Left Column: List of Groups (A-L) with summary */}
               <div className="lg:col-span-5 space-y-3 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar hidden lg:block">
@@ -2222,13 +2516,7 @@ export default function App() {
                   className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-0 pb-4 scroll-smooth"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].filter(groupKey => {
-                    if (!searchTerm) return true;
-                    const group = INITIAL_GROUPS_DATA[groupKey];
-                    return group.teams.some(team => 
-                      team.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                  }).map(groupKey => (
+                  {visibleGroups.map(groupKey => (
                     <div 
                       key={groupKey} 
                       className="w-full shrink-0 snap-center snap-always px-1" 
@@ -2241,6 +2529,296 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB: CALENDÁRIO COMPLETO */}
+        {activeTab === "calendario" && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Description & Filters Row */}
+            <div className="bg-slate-900/40 p-4.5 rounded-2xl border border-slate-900 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-emerald-400" /> Calendário Cronológico de Jogos
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Acompanhe a tabela completa dos 104 jogos em ordem cronológica de Brasília. Toque em qualquer jogo para editar o placar.
+                  </p>
+                </div>
+                
+                {/* Search Bar in Calendar */}
+                <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar país, estádio ou cidade..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50"
+                  />
+                  {searchTerm && (
+                    <button 
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </form>
+              </div>
+
+              {/* Filters Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-950/40">
+                {/* Stage Filters */}
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-1">Fase:</span>
+                  {[
+                    { id: "all", label: "Todos" },
+                    { id: "group", label: "Grupos" },
+                    { id: "R32", label: "32-avos" },
+                    { id: "R16", label: "Oitavas" },
+                    { id: "QF", label: "Quartas" },
+                    { id: "finals", label: "Finais" }
+                  ].map(filter => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setCalendarStageFilter(filter.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 cursor-pointer ${
+                        calendarStageFilter === filter.id
+                          ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20"
+                          : "bg-slate-950 text-slate-400 border border-slate-900 hover:text-slate-200 hover:bg-slate-900/50"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Status Filters */}
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-1">Status:</span>
+                  {[
+                    { id: "all", label: "Todos" },
+                    { id: "played", label: "Finalizados" },
+                    { id: "scheduled", label: "Agendados" }
+                  ].map(filter => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setCalendarStatusFilter(filter.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 cursor-pointer ${
+                        calendarStatusFilter === filter.id
+                          ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20"
+                          : "bg-slate-950 text-slate-400 border border-slate-900 hover:text-slate-200 hover:bg-slate-900/50"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Results Count Banner */}
+            <div className="flex justify-between items-center px-1">
+              <p className="text-xs text-slate-400">
+                Mostrando <strong className="text-slate-200 font-bold">{filteredMatches.length}</strong> de <strong className="text-slate-350">{allMatches.length}</strong> jogos
+              </p>
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm("")}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 font-bold transition cursor-pointer"
+                >
+                  Limpar busca
+                </button>
+              )}
+            </div>
+
+            {/* Matches Chronological Grid */}
+            {filteredMatches.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+                {filteredMatches.map(match => {
+                  const homeTeam = match.home ? (teamMap[match.home] || { name: match.home, flag: "" }) : null;
+                  const awayTeam = match.away ? (teamMap[match.away] || { name: match.away, flag: "" }) : null;
+                  const homePlaceholder = getPlaceholderName(match.id, "home");
+                  const awayPlaceholder = getPlaceholderName(match.id, "away");
+                  const showResults = match.scoreHome !== "" && match.scoreAway !== "";
+                  const brTime = getBrasiliaTime(match.localTime, match.fuso);
+                  
+                  const isMatchHighlighted = searchTerm && (
+                    (homeTeam && homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (awayTeam && awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    match.round?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    match.stageName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    match.estadio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    match.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
+                  );
+
+                  return (
+                    <div 
+                      key={match.id}
+                      onClick={() => {
+                        if (match.isKnockout) {
+                          openEditMatch(match, match.stageKey);
+                        } else {
+                          openEditMatch(match, "group", match.groupKey);
+                        }
+                      }}
+                      className={`border p-4.5 rounded-2xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-md hover:-translate-y-0.5 hover:shadow-lg ${
+                        isMatchHighlighted 
+                          ? "bg-emerald-500/10 border-emerald-500/35 shadow-emerald-500/5 hover:border-emerald-500/40 match-card-highlighted" 
+                          : "bg-slate-900 border-slate-900/60 hover:border-slate-800"
+                      }`}
+                    >
+                      {/* Card Header: Group/Knockout info & Date */}
+                      <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-950 pb-2.5 mb-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] uppercase tracking-wider border ${
+                            match.isKnockout 
+                              ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" 
+                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          }`}>
+                            {match.stageName}
+                          </span>
+                        </div>
+                        <span className="text-slate-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900 text-[10px] md:text-xs font-mono">
+                          {match.date}
+                        </span>
+                      </div>
+
+                      {/* Scoreline */}
+                      <div className="flex justify-between items-center gap-2 py-2">
+                        {/* Home Team */}
+                        <div className="flex items-center gap-2 max-w-[42%] truncate">
+                          {homeTeam ? (
+                            <>
+                              <TeamFlag teamId={match.home} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+                              <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{homeTeam.name}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="inline-block shrink-0 text-xs">🏳️</span>
+                              <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{homePlaceholder}</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Scores */}
+                        <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-900 shrink-0 font-mono text-xs md:text-sm font-bold min-w-[50px] justify-center">
+                          {showResults ? (
+                            <div className="flex items-center gap-0.5">
+                              {match.penHome !== "" && (
+                                <span className="text-[10px] text-slate-500 mr-0.5">({match.penHome})</span>
+                              )}
+                              <span className="text-slate-100">{match.scoreHome}</span>
+                              <span className="text-slate-600 px-0.5">-</span>
+                              <span className="text-slate-100">{match.scoreAway}</span>
+                              {match.penAway !== "" && (
+                                <span className="text-[10px] text-slate-500 ml-0.5">({match.penAway})</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider px-1 font-sans">Editar</span>
+                          )}
+                        </div>
+
+                        {/* Away Team */}
+                        <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
+                          {awayTeam ? (
+                            <>
+                              <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{awayTeam.name}</span>
+                              <TeamFlag teamId={match.away} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{awayPlaceholder}</span>
+                              <span className="inline-block shrink-0 text-xs">🏳️</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Venue and Clock footer */}
+                      <div className="mt-4 pt-2.5 border-t border-slate-950/70 flex flex-col gap-1 text-[11px] text-slate-500">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-emerald-500/70" /> 
+                            <span>DF: <strong className="text-slate-350 font-extrabold">{brTime}</strong></span>
+                          </span>
+                          <span className="font-mono">Local: <strong>{match.localTime} ({match.fuso})</strong></span>
+                        </div>
+                        <div className="flex justify-between items-center gap-2 mt-1">
+                          <div className="flex items-center gap-1.5 text-slate-500 min-w-0 max-w-[60%]">
+                            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-600" />
+                            <span className="truncate">{match.estadio} ({match.cidade})</span>
+                          </div>
+                          
+                          {/* Calendar Menu */}
+                          <div className="relative shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveCalendarMenu(activeCalendarMenu === match.id ? null : match.id);
+                              }}
+                              className="flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-emerald-400 bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-900 transition cursor-pointer"
+                            >
+                              <Calendar className="w-3 h-3 text-emerald-400" />
+                              <span>Salvar Agenda</span>
+                            </button>
+                            
+                            {activeCalendarMenu === match.id && (
+                              <div className="absolute right-0 bottom-full mb-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-20 flex flex-col gap-1 text-[10px] font-bold animate-fade-in">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCalendarMenu(null);
+                                    window.open(generateGoogleCalendarUrl(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder), '_blank');
+                                  }}
+                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                                  <span>Google Agenda</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCalendarMenu(null);
+                                    downloadIcsFile(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder);
+                                  }}
+                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                  <span>Apple / Outlook / ICS</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-slate-900/10 border border-slate-900 p-12 rounded-2xl text-center">
+                <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400 font-medium">Nenhum jogo encontrado com os filtros atuais.</p>
+                <p className="text-xs text-slate-500 mt-1">Experimente limpar a busca ou selecionar outra fase.</p>
+                {(searchTerm || calendarStageFilter !== "all" || calendarStatusFilter !== "all") && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setCalendarStageFilter("all");
+                      setCalendarStatusFilter("all");
+                    }}
+                    className="mt-4 bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-4 rounded-xl transition cursor-pointer"
+                  >
+                    Resetar Filtros
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -2611,6 +3189,7 @@ export default function App() {
         <nav className="max-w-md mx-auto bg-slate-950/80 backdrop-blur-xl border border-slate-900/60 p-2 rounded-2xl shadow-2xl flex justify-between items-center pointer-events-auto">
           {[
             { id: "grupos", label: "Grupos", icon: Users },
+            { id: "calendario", label: "Calendário", icon: Calendar },
             { id: "matamata", label: "Mata-Mata", icon: Trophy },
             { id: "estatisticas", label: "Estatísticas", icon: BarChart2 },
             { id: "sedes", label: "Sedes", icon: MapPin }
