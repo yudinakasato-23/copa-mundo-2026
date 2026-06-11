@@ -1036,22 +1036,60 @@ export default function App() {
       const savedG = localStorage.getItem("copa_2026_group_matches");
       const savedK = localStorage.getItem("copa_2026_knockout_matches");
 
+      let finalG = dbGroupMatches;
+      let finalK = dbKnockoutMatches;
+      let isSim = false;
+
       if (savedG && savedK) {
         try {
-          setGroupMatches(JSON.parse(savedG));
-          setKnockoutMatches(enrichKnockoutState(JSON.parse(savedK)));
-          setIsSimulationMode(true);
+          finalG = JSON.parse(savedG);
+          finalK = enrichKnockoutState(JSON.parse(savedK));
+          isSim = true;
         } catch (e) {
           console.error("Erro ao carregar simulação salva:", e);
-          setGroupMatches(dbGroupMatches);
-          setKnockoutMatches(dbKnockoutMatches);
-          setIsSimulationMode(false);
         }
-      } else {
-        setGroupMatches(dbGroupMatches);
-        setKnockoutMatches(dbKnockoutMatches);
-        setIsSimulationMode(false);
       }
+
+      // Run a migration to update dates, times, and venues from generateInitialMatches
+      const correctInitialG = generateInitialMatches();
+      let migrated = false;
+      const migratedG = {};
+
+      Object.keys(finalG).forEach(groupKey => {
+        migratedG[groupKey] = finalG[groupKey].map((m, idx) => {
+          const correctM = correctInitialG[groupKey]?.[idx];
+          if (correctM && (m.date !== correctM.date || m.localTime !== correctM.localTime || m.estadio !== correctM.estadio)) {
+            migrated = true;
+            return {
+              ...m,
+              date: correctM.date,
+              localTime: correctM.localTime,
+              estadio: correctM.estadio,
+              cidade: correctM.cidade,
+              fuso: correctM.fuso,
+              pais: correctM.pais,
+              bandeira: correctM.bandeira
+            };
+          }
+          return m;
+        });
+      });
+
+      if (migrated) {
+        finalG = migratedG;
+        // Save back to localStorage if in simulation mode
+        if (isSim) {
+          try {
+            localStorage.setItem("copa_2026_group_matches", JSON.stringify(finalG));
+          } catch (e) {
+            console.error("Failed to save migrated matches:", e);
+          }
+        }
+      }
+
+      setGroupMatches(finalG);
+      setKnockoutMatches(finalK);
+      setIsSimulationMode(isSim);
     };
 
     loadMatches();

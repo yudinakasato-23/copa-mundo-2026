@@ -26,16 +26,30 @@ const getSedeForGroupMatch = (groupKey, matchIdx) => {
   return SEDES_2026[sedeIdx];
 };
 
+const GROUP_SCHEDULES = {
+  A: { r1: 11, r2: 17, r3: 24 },
+  B: { r1: 12, r2: 18, r3: 24 },
+  C: { r1: 13, r2: 19, r3: 24 },
+  D: { r1: 12, r2: 19, r3: 25 },
+  E: { r1: 14, r2: 20, r3: 25 },
+  F: { r1: 14, r2: 21, r3: 25 },
+  G: { r1: 15, r2: 21, r3: 26 },
+  H: { r1: 15, r2: 22, r3: 26 },
+  I: { r1: 16, r2: 22, r3: 26 },
+  J: { r1: 17, r2: 23, r3: 27 },
+  K: { r1: 17, r2: 23, r3: 27 },
+  L: { r1: 18, r2: 24, r3: 27 }
+};
+
 // Helper to assign a realistic date based on group and round
 const getMatchDateAndHour = (groupKey, roundStr, matchIdx) => {
-  const groupIndex = groupKey.charCodeAt(0) - 65; // A=0, B=1, ..., L=11
+  const sched = GROUP_SCHEDULES[groupKey] || { r1: 11, r2: 16, r3: 21 };
   
-  // World Cup 2026 group stage runs from June 11 to June 27, 2026
   let day = 11;
   let localTime = "18:00";
 
   if (roundStr === "Rodada 1") {
-    day = 11 + Math.floor(groupIndex / 3); // June 11 to 14
+    day = sched.r1;
     // Match times (Local) can be 13:00, 16:00, 19:00, 21:00
     localTime = matchIdx % 2 === 0 ? "15:00" : "19:00";
     if (groupKey === "A" && matchIdx === 0) {
@@ -43,12 +57,26 @@ const getMatchDateAndHour = (groupKey, roundStr, matchIdx) => {
       localTime = "17:00";
     }
   } else if (roundStr === "Rodada 2") {
-    day = 16 + Math.floor(groupIndex / 3); // June 16 to 19
+    day = sched.r2;
     localTime = matchIdx % 2 === 0 ? "14:00" : "18:00";
   } else {
     // Rodada 3 (simultaneous matches for fairness)
-    day = 21 + Math.floor(groupIndex / 3); // June 21 to 24
+    day = sched.r3;
     localTime = "16:00"; // All final group matches usually kickoff at same local time
+  }
+
+  // Adjust Brazil's specific matches to match the official schedules exactly!
+  if (groupKey === "C") {
+    if (roundStr === "Rodada 1") {
+      day = 13;
+      localTime = matchIdx === 0 ? "18:00" : "15:00"; // Brasil vs Marrocos is match 0. localTime in NY is UTC-4. 18:00 NY = 19:00 Brasília time
+    } else if (roundStr === "Rodada 2") {
+      day = 19;
+      localTime = matchIdx === 2 ? "20:30" : "14:00"; // Brasil vs Haiti is match 2. localTime in Philly is UTC-4. 20:30 Philly = 21:30 Brasília time
+    } else if (roundStr === "Rodada 3") {
+      day = 24;
+      localTime = matchIdx === 4 ? "21:00" : "16:00"; // Escócia vs Brasil is match 4. localTime in Miami is UTC-4. 21:00 Miami = 22:00 Brasília time
+    }
   }
 
   return {
