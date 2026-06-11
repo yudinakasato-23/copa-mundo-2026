@@ -1646,6 +1646,18 @@ export default function App() {
 
   // Simulates the entire tournament (groups + bracket) with local storage or database synchronization
   const simulateEntireTournament = async () => {
+    // Check if there are any manual entries
+    const hasManualScores = Object.values(groupMatches).some(group => 
+      group.some(m => m.scoreHome !== "" || m.scoreAway !== "")
+    );
+    
+    if (hasManualScores) {
+      const confirmSim = window.confirm(
+        "Atenção: Você possui placares inseridos manualmente. Ao realizar a simulação automática de todo o torneio, todos os seus placares manuais serão substituídos por palpites simulados. Deseja continuar?"
+      );
+      if (!confirmSim) return;
+    }
+
     setIsSimulating(true);
     const simulatedGroups = simulateGroupStage();
     const simulatedKnockout = simulateFullKnockoutState(simulatedGroups);
@@ -1984,6 +1996,14 @@ export default function App() {
           
           <button 
             onClick={async () => {
+              const hasManualScoresInGroup = groupMatches[groupKey].some(m => m.scoreHome !== "" || m.scoreAway !== "");
+              if (hasManualScoresInGroup) {
+                const confirmSim = window.confirm(
+                  `Atenção: Você possui placares inseridos manualmente no Grupo ${groupKey}. Ao simular este grupo automaticamente, esses placares serão substituídos. Deseja continuar?`
+                );
+                if (!confirmSim) return;
+              }
+
               const updatedMatchesForThisGroup = groupMatches[groupKey].map(match => {
                 const { sh, sa } = simulateMatchScore(match.home, match.away);
                 return { ...match, scoreHome: sh.toString(), scoreAway: sa.toString() };
@@ -2900,6 +2920,16 @@ export default function App() {
               
               <button 
                 onClick={async () => {
+                  const hasManualKnockoutScores = Object.values(knockoutMatches).some(stage =>
+                    stage.some(m => m.scoreHome !== "" || m.scoreAway !== "")
+                  );
+                  if (hasManualKnockoutScores) {
+                    const confirmSim = window.confirm(
+                      "Atenção: Você possui placares inseridos manualmente no mata-mata. Ao realizar a simulação automática dos confrontos, esses placares serão substituídos. Deseja continuar?"
+                    );
+                    if (!confirmSim) return;
+                  }
+
                   const localKnockoutSync = simulateFullKnockoutState(groupMatches);
                   setKnockoutMatches(localKnockoutSync);
                   if (isAdminMode) {
