@@ -388,6 +388,26 @@ export default function App() {
     }
   }, [activeKnockoutPhase]);
 
+  // Auto-focus the first matching group when searching
+  useEffect(() => {
+    if (searchTerm.trim() !== "") {
+      const matchQuery = searchTerm.toLowerCase();
+      const firstMatchingGroupKey = Object.keys(INITIAL_GROUPS_DATA).find(groupKey =>
+        INITIAL_GROUPS_DATA[groupKey].teams.some(team =>
+          team.name.toLowerCase().includes(matchQuery)
+        )
+      );
+      if (firstMatchingGroupKey) {
+        const currentGroupMatches = INITIAL_GROUPS_DATA[expandedGroup]?.teams.some(team =>
+          team.name.toLowerCase().includes(matchQuery)
+        );
+        if (!currentGroupMatches) {
+          setExpandedGroup(firstMatchingGroupKey);
+        }
+      }
+    }
+  }, [searchTerm, expandedGroup]);
+
   // Sync scroll position of groups container when activeTab or expandedGroup changes
   useEffect(() => {
     if (activeTab === "grupos" && mobileGroupScrollContainerRef.current) {
@@ -1683,11 +1703,16 @@ export default function App() {
                 {standings.map((team, idx) => {
                   const isQualifying = idx < 2;
                   const isBestThirdCandidate = idx === 2;
+                  const isHighlighted = searchTerm && team.name.toLowerCase().includes(searchTerm.toLowerCase());
                   return (
                     <tr 
                       key={team.id}
                       className={`hover:bg-slate-900/30 transition duration-150 ${
-                        isQualifying ? "bg-emerald-500/[0.005]" : ""
+                        isHighlighted 
+                          ? "bg-emerald-500/10 border-y border-emerald-500/25" 
+                          : isQualifying 
+                            ? "bg-emerald-500/[0.005]" 
+                            : ""
                       }`}
                     >
                       <td className="py-3.5 pl-3 pr-2 font-medium sticky left-0 z-10 bg-slate-950 border-r border-slate-900/60 shadow-[1px_0_0_0_rgba(255,255,255,0.05)] w-40 md:w-52 min-w-[160px] md:min-w-[208px] max-w-[160px] md:max-w-[208px]">
@@ -1767,11 +1792,20 @@ export default function App() {
               // Calculate Brasilia Time
               const brTime = getBrasiliaTime(match.localTime, match.fuso);
               
+              const isMatchHighlighted = searchTerm && (
+                homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase())
+              );
+              
               return (
                 <div 
                   key={match.id}
                   onClick={() => openEditMatch(match, "group", groupKey)}
-                  className="bg-slate-900 border border-slate-900 hover:border-slate-800 p-3.5 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-sm"
+                  className={`border p-3.5 rounded-xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-sm ${
+                    isMatchHighlighted 
+                      ? "bg-emerald-500/10 border-emerald-500/35 shadow-emerald-500/5 hover:border-emerald-500/40" 
+                      : "bg-slate-900 border-slate-900 hover:border-slate-800"
+                  }`}
                 >
                   {/* Match header info */}
                   <div className="flex justify-between items-center text-xs md:text-sm text-slate-400 border-b border-slate-950 pb-2 mb-3">
@@ -2081,7 +2115,13 @@ export default function App() {
                   ref={groupScrollRef}
                   className="flex overflow-x-auto no-scrollbar gap-2"
                 >
-                  {Object.keys(INITIAL_GROUPS_DATA).map(groupKey => {
+                  {Object.keys(INITIAL_GROUPS_DATA).filter(groupKey => {
+                    if (!searchTerm) return true;
+                    const group = INITIAL_GROUPS_DATA[groupKey];
+                    return group.teams.some(team => 
+                      team.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                  }).map(groupKey => {
                     const isSelected = expandedGroup === groupKey;
                     return (
                       <button
@@ -2182,7 +2222,13 @@ export default function App() {
                   className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-0 pb-4 scroll-smooth"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].map(groupKey => (
+                  {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].filter(groupKey => {
+                    if (!searchTerm) return true;
+                    const group = INITIAL_GROUPS_DATA[groupKey];
+                    return group.teams.some(team => 
+                      team.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                  }).map(groupKey => (
                     <div 
                       key={groupKey} 
                       className="w-full shrink-0 snap-center snap-always px-1" 
