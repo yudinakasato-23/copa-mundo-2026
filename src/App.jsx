@@ -243,6 +243,30 @@ const getUTCDateTime = (dateStr, timeStr, fusoStr) => {
   return new Date(Date.UTC(year, month - 1, day, hour + offsetHours, minute));
 };
 
+const getBrasiliaDateTimeParts = (dateStr, timeStr, fusoStr) => {
+  const utcDate = getUTCDateTime(dateStr, timeStr, fusoStr);
+  
+  // Format in America/Sao_Paulo timezone
+  const formatterDate = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  
+  const formatterTime = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
+  
+  return {
+    date: formatterDate.format(utcDate),
+    time: formatterTime.format(utcDate)
+  };
+};
+
 const formatUTCForCalendar = (dateObj) => {
   const pad = (n) => String(n).padStart(2, '0');
   const y = dateObj.getUTCFullYear();
@@ -398,7 +422,7 @@ export default function App() {
 
   // Mobile horizontal scroll-snap states and sync for groups
   const mobileGroupScrollContainerRef = useRef(null);
-  const [isScrollingGroupProgrammatically, setIsScrollingGroupProgrammatically] = useState(false);
+  const isScrollingGroupProgrammaticallyRef = useRef(false);
 
   const visibleGroups = useMemo(() => {
     const allGroupKeys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -413,7 +437,7 @@ export default function App() {
   }, [searchTerm]);
 
   const handleMobileGroupScroll = () => {
-    if (isScrollingGroupProgrammatically) return;
+    if (isScrollingGroupProgrammaticallyRef.current) return;
     const container = mobileGroupScrollContainerRef.current;
     if (!container) return;
 
@@ -449,7 +473,7 @@ export default function App() {
 
     const index = visibleGroups.indexOf(groupId);
     if (index !== -1) {
-      setIsScrollingGroupProgrammatically(true);
+      isScrollingGroupProgrammaticallyRef.current = true;
       const containerWidth = container.clientWidth;
       container.scrollTo({
         left: index * containerWidth,
@@ -457,8 +481,8 @@ export default function App() {
       });
       
       setTimeout(() => {
-        setIsScrollingGroupProgrammatically(false);
-      }, 450);
+        isScrollingGroupProgrammaticallyRef.current = false;
+      }, 500);
     }
   };
 
@@ -512,17 +536,20 @@ export default function App() {
     if (activeTab === "grupos" && mobileGroupScrollContainerRef.current) {
       const index = visibleGroups.indexOf(expandedGroup);
       if (index !== -1) {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           const container = mobileGroupScrollContainerRef.current;
           if (container) {
             const containerWidth = container.clientWidth;
             if (containerWidth > 0 && Math.abs(container.scrollLeft - index * containerWidth) > 5) {
-              setIsScrollingGroupProgrammatically(true);
+              isScrollingGroupProgrammaticallyRef.current = true;
               container.scrollLeft = index * containerWidth;
-              setIsScrollingGroupProgrammatically(false);
+              setTimeout(() => {
+                isScrollingGroupProgrammaticallyRef.current = false;
+              }, 150);
             }
           }
         }, 50);
+        return () => clearTimeout(timer);
       }
     }
   }, [activeTab, expandedGroup, searchTerm, visibleGroups]);
@@ -772,16 +799,9 @@ export default function App() {
       });
     });
 
-    const parseDateTime = (dateStr, timeStr) => {
-      if (!dateStr) return 0;
-      const [day, month, year] = dateStr.split("/").map(Number);
-      const [hour, minute] = (timeStr || "00:00").split(":").map(Number);
-      return new Date(year, month - 1, day, hour, minute).getTime();
-    };
-
     list.sort((a, b) => {
-      const timeA = parseDateTime(a.date, a.localTime);
-      const timeB = parseDateTime(b.date, b.localTime);
+      const timeA = getUTCDateTime(a.date, a.localTime, a.fuso).getTime();
+      const timeB = getUTCDateTime(b.date, b.localTime, b.fuso).getTime();
       if (timeA !== timeB) return timeA - timeB;
       return a.id.localeCompare(b.id);
     });
@@ -2644,7 +2664,9 @@ export default function App() {
                   const homePlaceholder = getPlaceholderName(match.id, "home");
                   const awayPlaceholder = getPlaceholderName(match.id, "away");
                   const showResults = match.scoreHome !== "" && match.scoreAway !== "";
-                  const brTime = getBrasiliaTime(match.localTime, match.fuso);
+                  const brParts = getBrasiliaDateTimeParts(match.date, match.localTime, match.fuso);
+                  const brDate = brParts.date;
+                  const brTime = brParts.time;
                   
                   const isMatchHighlighted = searchTerm && (
                     (homeTeam && homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -2683,7 +2705,7 @@ export default function App() {
                           </span>
                         </div>
                         <span className="text-slate-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900 text-[10px] md:text-xs font-mono">
-                          {match.date}
+                          {brDate}
                         </span>
                       </div>
 
@@ -2746,7 +2768,7 @@ export default function App() {
                             <Clock className="w-3.5 h-3.5 text-emerald-500/70" /> 
                             <span>DF: <strong className="text-slate-350 font-extrabold">{brTime}</strong></span>
                           </span>
-                          <span className="font-mono">Local: <strong>{match.localTime} ({match.fuso})</strong></span>
+                          <span className="font-mono text-slate-500">Local: {match.date} {match.localTime} ({match.fuso})</span>
                         </div>
                         <div className="flex justify-between items-center gap-2 mt-1">
                           <div className="flex items-center gap-1.5 text-slate-500 min-w-0 max-w-[60%]">
