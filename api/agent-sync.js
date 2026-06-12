@@ -126,9 +126,10 @@ ${croppedHtml}
     // 6. Recalculate Knockout Bracket based on the new updates
     const finalKnockoutBrackets = triggerKnockoutPropagation(updatedMatches);
 
-    // 7. Upsert all updates in a single batch to Supabase
-    const allUpdates = [
-      ...updatedMatches.map(m => ({
+    // 7. Upsert all updates in a single batch to Supabase (deduplicated by ID)
+    const uniqueUpdatesMap = new Map();
+    updatedMatches.forEach(m => {
+      uniqueUpdatesMap.set(m.id, {
         id: m.id,
         home: m.home,
         away: m.away,
@@ -144,9 +145,12 @@ ${croppedHtml}
         fuso: m.fuso,
         pais: m.pais,
         bandeira: m.bandeira
-      })),
-      ...finalKnockoutBrackets
-    ];
+      });
+    });
+    finalKnockoutBrackets.forEach(m => {
+      uniqueUpdatesMap.set(m.id, m);
+    });
+    const allUpdates = Array.from(uniqueUpdatesMap.values());
 
     const { error: upsertError } = await supabase.from('matches').upsert(allUpdates, { onConflict: 'id' });
     if (upsertError) throw upsertError;

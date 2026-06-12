@@ -267,6 +267,44 @@ const getBrasiliaDateTimeParts = (dateStr, timeStr, fusoStr) => {
   };
 };
 
+const getBrasiliaTodayStr = () => {
+  const formatter = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  return formatter.format(new Date());
+};
+
+const getBrasiliaTomorrowStr = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const formatter = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  return formatter.format(tomorrow);
+};
+
+const formatFriendlyDate = (dateStr, todayStr, tomorrowStr) => {
+  if (dateStr === todayStr) return "Hoje";
+  if (dateStr === tomorrowStr) return "Amanhã";
+  
+  const [day, month, year] = dateStr.split("/").map(Number);
+  const dateObj = new Date(year, month - 1, day);
+  
+  const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+  const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  
+  const weekday = weekdays[dateObj.getDay()];
+  const monthName = months[dateObj.getMonth()];
+  
+  return `${weekday}, ${day} de ${monthName}`;
+};
+
 const formatUTCForCalendar = (dateObj) => {
   const pad = (n) => String(n).padStart(2, '0');
   const y = dateObj.getUTCFullYear();
@@ -760,6 +798,99 @@ export default function App() {
     }
   };
 
+  const bolaoStats = useMemo(() => {
+    let totalPoints = 0;
+    let exactCount = 0;
+    let outcomeCount = 0;
+    let wrongCount = 0;
+    let matchesCompared = 0;
+
+    if (!isSimulationMode || !officialGroupMatches) {
+      return { totalPoints, exactCount, outcomeCount, wrongCount, matchesCompared };
+    }
+
+    // 1. Compare Group Matches
+    Object.keys(groupMatches).forEach(groupKey => {
+      const simGroup = groupMatches[groupKey] || [];
+      const realGroup = officialGroupMatches[groupKey] || [];
+
+      simGroup.forEach((simMatch, idx) => {
+        const realMatch = realGroup[idx];
+        if (!realMatch) return;
+
+        const hasRealScore = realMatch.scoreHome !== "" && realMatch.scoreAway !== "";
+        const hasSimScore = simMatch.scoreHome !== "" && simMatch.scoreAway !== "";
+
+        if (hasRealScore && hasSimScore) {
+          const simHome = parseInt(simMatch.scoreHome, 10);
+          const simAway = parseInt(simMatch.scoreAway, 10);
+          const realHome = parseInt(realMatch.scoreHome, 10);
+          const realAway = parseInt(realMatch.scoreAway, 10);
+
+          if (isNaN(simHome) || isNaN(simAway) || isNaN(realHome) || isNaN(realAway)) return;
+
+          matchesCompared++;
+          if (simHome === realHome && simAway === realAway) {
+            totalPoints += 3;
+            exactCount++;
+          } else {
+            const simOutcome = Math.sign(simHome - simAway);
+            const realOutcome = Math.sign(realHome - realAway);
+            if (simOutcome === realOutcome) {
+              totalPoints += 1;
+              outcomeCount++;
+            } else {
+              wrongCount++;
+            }
+          }
+        }
+      });
+    });
+
+    // 2. Compare Knockout Matches
+    if (officialKnockoutMatches && knockoutMatches) {
+      Object.keys(knockoutMatches).forEach(stageKey => {
+        const simStage = knockoutMatches[stageKey] || [];
+        const realStage = officialKnockoutMatches[stageKey] || [];
+
+        simStage.forEach((simMatch) => {
+          const realMatch = realStage.find(m => m.id === simMatch.id);
+          if (!realMatch) return;
+
+          const hasRealScore = realMatch.scoreHome !== "" && realMatch.scoreAway !== "";
+          const hasSimScore = simMatch.scoreHome !== "" && simMatch.scoreAway !== "";
+          const teamsMatch = simMatch.home && simMatch.away && simMatch.home === realMatch.home && simMatch.away === realMatch.away;
+
+          if (hasRealScore && hasSimScore && teamsMatch) {
+            const simHome = parseInt(simMatch.scoreHome, 10);
+            const simAway = parseInt(simMatch.scoreAway, 10);
+            const realHome = parseInt(realMatch.scoreHome, 10);
+            const realAway = parseInt(realMatch.scoreAway, 10);
+
+            if (isNaN(simHome) || isNaN(simAway) || isNaN(realHome) || isNaN(realAway)) return;
+
+            matchesCompared++;
+            if (simHome === realHome && simAway === realAway) {
+              totalPoints += 3;
+              exactCount++;
+            } else {
+              const simOutcome = Math.sign(simHome - simAway);
+              const realOutcome = Math.sign(realHome - realAway);
+              if (simOutcome === realOutcome) {
+                totalPoints += 1;
+                outcomeCount++;
+              } else {
+                wrongCount++;
+              }
+            }
+          }
+        });
+      });
+    }
+
+    return { totalPoints, exactCount, outcomeCount, wrongCount, matchesCompared };
+  }, [isSimulationMode, groupMatches, knockoutMatches, officialGroupMatches, officialKnockoutMatches]);
+
   const allMatches = useMemo(() => {
     const list = [];
 
@@ -846,6 +977,280 @@ export default function App() {
       return true;
     });
   }, [allMatches, searchTerm, calendarStageFilter, calendarStatusFilter, teamMap]);
+
+  const { playedGroups, upcomingGroups } = useMemo(() => {
+    const played = [];
+    const upcoming = [];
+    
+    filteredMatches.forEach(match => {
+      const hasPlayed = match.scoreHome !== "" && match.scoreAway !== "";
+      if (hasPlayed) {
+        played.push(match);
+      } else {
+        upcoming.push(match);
+      }
+    });
+    
+    const todayStr = getBrasiliaTodayStr();
+    const tomorrowStr = getBrasiliaTomorrowStr();
+    
+    const groupMatchesFn = (list) => {
+      const groupsMap = new Map();
+      list.forEach(match => {
+        const brParts = getBrasiliaDateTimeParts(match.date, match.localTime, match.fuso);
+        const friendly = formatFriendlyDate(brParts.date, todayStr, tomorrowStr);
+        
+        if (!groupsMap.has(friendly)) {
+          groupsMap.set(friendly, []);
+        }
+        groupsMap.get(friendly).push({ ...match, brParts });
+      });
+      return Array.from(groupsMap.entries()).map(([friendlyDate, matches]) => ({
+        friendlyDate,
+        matches
+      }));
+    };
+    
+    return {
+      playedGroups: groupMatchesFn(played),
+      upcomingGroups: groupMatchesFn(upcoming)
+    };
+  }, [filteredMatches]);
+
+  const renderCalendarMatchCard = (match) => {
+    const homeTeam = match.home ? (teamMap[match.home] || { name: match.home, flag: "" }) : null;
+    const awayTeam = match.away ? (teamMap[match.away] || { name: match.away, flag: "" }) : null;
+    const homePlaceholder = getPlaceholderName(match.id, "home");
+    const awayPlaceholder = getPlaceholderName(match.id, "away");
+    const showResults = match.scoreHome !== "" && match.scoreAway !== "";
+    const brDate = match.brParts.date;
+    const brTime = match.brParts.time;
+    
+    const isMatchHighlighted = searchTerm && (
+      (homeTeam && homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (awayTeam && awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      match.round?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.stageName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.estadio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+      <div 
+        key={match.id}
+        onClick={() => {
+          if (match.isKnockout) {
+            openEditMatch(match, match.stageKey);
+          } else {
+            openEditMatch(match, "group", match.groupKey);
+          }
+        }}
+        className={`border p-4.5 rounded-2xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-md hover:-translate-y-0.5 hover:shadow-lg ${
+          isMatchHighlighted 
+            ? "bg-emerald-500/10 border-emerald-500/35 shadow-emerald-500/5 hover:border-emerald-500/40 match-card-highlighted" 
+            : "bg-slate-900 border-slate-900/60 hover:border-slate-800"
+        }`}
+      >
+        {/* Card Header: Group/Knockout info & Date */}
+        <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-950 pb-2.5 mb-3.5">
+          <div className="flex items-center gap-1.5">
+            <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] uppercase tracking-wider border ${
+              match.isKnockout 
+                ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" 
+                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            }`}>
+              {match.stageName}
+            </span>
+          </div>
+          <span className="text-slate-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900 text-[10px] md:text-xs font-mono">
+            {brDate}
+          </span>
+        </div>
+
+        {/* Scoreline */}
+        <div className="flex justify-between items-center gap-2 py-2">
+          {/* Home Team */}
+          <div className="flex items-center gap-2 max-w-[42%] truncate">
+            {homeTeam ? (
+              <>
+                <TeamFlag teamId={match.home} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+                <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{homeTeam.name}</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-block shrink-0 text-xs">🏳️</span>
+                <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{homePlaceholder}</span>
+              </>
+            )}
+          </div>
+
+          {/* Scores */}
+          <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-900 shrink-0 font-mono text-xs md:text-sm font-bold min-w-[50px] justify-center">
+            {showResults ? (
+              <div className="flex items-center gap-0.5">
+                {match.penHome !== "" && (
+                  <span className="text-[10px] text-slate-500 mr-0.5">({match.penHome})</span>
+                )}
+                <span className="text-slate-100">{match.scoreHome}</span>
+                <span className="text-slate-600 px-0.5">-</span>
+                <span className="text-slate-100">{match.scoreAway}</span>
+                {match.penAway !== "" && (
+                  <span className="text-[10px] text-slate-500 ml-0.5">({match.penAway})</span>
+                )}
+              </div>
+            ) : (
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider px-1 font-sans">Editar</span>
+            )}
+          </div>
+
+          {/* Away Team */}
+          <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
+            {awayTeam ? (
+              <>
+                <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{awayTeam.name}</span>
+                <TeamFlag teamId={match.away} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
+              </>
+            ) : (
+              <>
+                <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{awayPlaceholder}</span>
+                <span className="inline-block shrink-0 text-xs">🏳️</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {(() => {
+          if (!isSimulationMode) return null;
+          
+          const realMatch = match.isKnockout
+            ? officialKnockoutMatches?.[match.stageKey]?.find(m => m.id === match.id)
+            : officialGroupMatches?.[match.groupKey]?.find(m => m.id === match.id);
+            
+          if (!realMatch || realMatch.scoreHome === "" || realMatch.scoreAway === "") return null;
+          
+          const teamsMatch = !match.isKnockout || (match.home && match.away && match.home === realMatch.home && match.away === realMatch.away);
+          
+          let comparisonType = "none";
+          if (!teamsMatch) {
+            comparisonType = "teamsMismatch";
+          } else if (match.scoreHome !== "" && match.scoreAway !== "") {
+            const simHome = parseInt(match.scoreHome, 10);
+            const simAway = parseInt(match.scoreAway, 10);
+            const realHome = parseInt(realMatch.scoreHome, 10);
+            const realAway = parseInt(realMatch.scoreAway, 10);
+            
+            if (!isNaN(simHome) && !isNaN(simAway) && !isNaN(realHome) && !isNaN(realAway)) {
+              if (simHome === realHome && simAway === realAway) {
+                comparisonType = "exact";
+              } else {
+                const simOutcome = Math.sign(simHome - simAway);
+                const realOutcome = Math.sign(realHome - realAway);
+                if (simOutcome === realOutcome) {
+                  comparisonType = "outcome";
+                } else {
+                  comparisonType = "wrong";
+                }
+              }
+            }
+          }
+          
+          if (comparisonType === "none") return null;
+
+          return (
+            <div className="mt-3 mb-1 px-2.5 py-2 rounded-lg bg-slate-950/60 border border-slate-900 flex flex-row justify-between items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <span className="font-semibold text-slate-500 uppercase text-[9px] tracking-wider shrink-0">Real:</span>
+                <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-900/80 font-mono font-bold text-slate-200">
+                  <span>{realMatch.scoreHome}</span>
+                  <span className="text-slate-650">-</span>
+                  <span>{realMatch.scoreAway}</span>
+                </div>
+              </div>
+              
+              {comparisonType === "exact" && (
+                <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  🎯 Placar Exato (+3 pts)
+                </span>
+              )}
+              {comparisonType === "outcome" && (
+                <span className="text-[10px] font-extrabold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                  ✌️ Vencedor/Empate (+1 pt)
+                </span>
+              )}
+              {comparisonType === "wrong" && (
+                <span className="text-[10px] font-extrabold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-800">
+                  ❌ Errou (0 pts)
+                </span>
+              )}
+              {comparisonType === "teamsMismatch" && (
+                <span className="text-[10px] font-medium text-slate-500 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-850 italic">
+                  ⚠️ Confronto Diferente
+                </span>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Venue and Clock footer */}
+        <div className="mt-4 pt-2.5 border-t border-slate-950/70 flex flex-col gap-1 text-[11px] text-slate-500">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-emerald-500/70" /> 
+              <span>DF: <strong className="text-slate-350 font-extrabold">{brTime}</strong></span>
+            </span>
+            <span className="font-mono text-slate-500">Local: {match.date} {match.localTime} ({match.fuso})</span>
+          </div>
+          <div className="flex justify-between items-center gap-2 mt-1">
+            <div className="flex items-center gap-1.5 text-slate-500 min-w-0 max-w-[60%]">
+              <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-600" />
+              <span className="truncate">{match.estadio} ({match.cidade})</span>
+            </div>
+            
+            {/* Calendar Menu */}
+            <div className="relative shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveCalendarMenu(activeCalendarMenu === match.id ? null : match.id);
+                }}
+                className="flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-emerald-400 bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-900 transition cursor-pointer"
+              >
+                <Calendar className="w-3 h-3 text-emerald-400" />
+                <span>Salvar Agenda</span>
+              </button>
+              
+              {activeCalendarMenu === match.id && (
+                <div className="absolute right-0 bottom-full mb-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-20 flex flex-col gap-1 text-[10px] font-bold animate-fade-in">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCalendarMenu(null);
+                      window.open(generateGoogleCalendarUrl(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder), '_blank');
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <span>Google Agenda</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCalendarMenu(null);
+                      downloadIcsFile(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span>Apple / Outlook / ICS</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Sync state to Supabase in batches (helper function)
   const syncMatchesToSupabase = async (gMatches, kMatches) => {
@@ -2209,6 +2614,63 @@ export default function App() {
                       <TeamFlag teamId={match.away} />
                     </div>
                   </div>
+
+                  {(() => {
+                    if (!isSimulationMode) return null;
+                    const realMatch = officialGroupMatches?.[groupKey]?.find(m => m.id === match.id);
+                    if (!realMatch || realMatch.scoreHome === "" || realMatch.scoreAway === "") return null;
+                    
+                    const simHome = parseInt(match.scoreHome, 10);
+                    const simAway = parseInt(match.scoreAway, 10);
+                    const realHome = parseInt(realMatch.scoreHome, 10);
+                    const realAway = parseInt(realMatch.scoreAway, 10);
+                    
+                    let comparisonType = "none";
+                    if (match.scoreHome !== "" && match.scoreAway !== "" && !isNaN(simHome) && !isNaN(simAway) && !isNaN(realHome) && !isNaN(realAway)) {
+                      if (simHome === realHome && simAway === realAway) {
+                        comparisonType = "exact";
+                      } else {
+                        const simOutcome = Math.sign(simHome - simAway);
+                        const realOutcome = Math.sign(realHome - realAway);
+                        if (simOutcome === realOutcome) {
+                          comparisonType = "outcome";
+                        } else {
+                          comparisonType = "wrong";
+                        }
+                      }
+                    }
+                    
+                    if (comparisonType === "none") return null;
+
+                    return (
+                      <div className="mt-2.5 mb-1 px-2.5 py-2 rounded-lg bg-slate-950/60 border border-slate-900 flex flex-row justify-between items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <span className="font-semibold text-slate-500 uppercase text-[9px] tracking-wider shrink-0">Real:</span>
+                          <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-900/80 font-mono font-bold text-slate-200">
+                            <span>{realMatch.scoreHome}</span>
+                            <span className="text-slate-650">-</span>
+                            <span>{realMatch.scoreAway}</span>
+                          </div>
+                        </div>
+                        
+                        {comparisonType === "exact" && (
+                          <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            🎯 Placar Exato (+3 pts)
+                          </span>
+                        )}
+                        {comparisonType === "outcome" && (
+                          <span className="text-[10px] font-extrabold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                            ✌️ Vencedor/Empate (+1 pt)
+                          </span>
+                        )}
+                        {comparisonType === "wrong" && (
+                          <span className="text-[10px] font-extrabold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-800">
+                            ❌ Errou (0 pts)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   
                   {/* Timezone display & venue */}
                   <div className="mt-3.5 pt-2 border-t border-slate-950 flex flex-col gap-1 text-xs md:text-sm text-slate-400 group-hover:text-slate-350 transition">
@@ -2395,21 +2857,47 @@ export default function App() {
         {/* Banner Status do Banco vs Simulação */}
         <div className="mb-6">
           {isSimulationMode ? (
-            <div className="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md animate-fade-in">
-              <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-                <span>🔮 MODO SIMULAÇÃO ATIVO</span>
-                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">(Os palpites estão salvos no seu navegador)</span>
+            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 shadow-md animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1">
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold shrink-0">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                  <span>🔮 MODO SIMULAÇÃO ATIVO</span>
+                </div>
+                
+                {bolaoStats.matchesCompared > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2 bg-slate-950/60 py-1.5 px-3 rounded-xl border border-slate-900 text-xs">
+                    <span className="text-slate-400">Pontuação do Bolão:</span>
+                    <span className="text-amber-450 font-extrabold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                      🏆 {bolaoStats.totalPoints} pts
+                    </span>
+                    <div className="h-3.5 w-[1px] bg-slate-800 hidden xs:inline-block"></div>
+                    <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                      🎯 <strong className="text-emerald-450 font-bold">{bolaoStats.exactCount}</strong> placar exato
+                    </span>
+                    <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                      ✌️ <strong className="text-blue-450 font-bold">{bolaoStats.outcomeCount}</strong> vencedor/empate
+                    </span>
+                    <span className="text-slate-500 text-[10px] italic">
+                      ({bolaoStats.matchesCompared} {bolaoStats.matchesCompared === 1 ? 'jogo comparado' : 'jogos comparados'})
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    (Insira placares para comparar com os resultados reais do banco e pontuar!)
+                  </span>
+                )}
               </div>
-              <button 
-                onClick={leaveSimulationMode}
-                className="text-[10px] font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
-              >
-                Voltar para Resultados Reais
-              </button>
+              <div className="flex items-center gap-2 shrink-0 justify-end">
+                <button 
+                  onClick={leaveSimulationMode}
+                  className="text-[10px] font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                >
+                  Voltar para Resultados Reais
+                </button>
+              </div>
             </div>
           ) : isAdminMode ? (
             <div className="bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md animate-fade-in">
@@ -2715,170 +3203,66 @@ export default function App() {
 
             {/* Matches Chronological Grid */}
             {filteredMatches.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
-                {filteredMatches.map(match => {
-                  const homeTeam = match.home ? (teamMap[match.home] || { name: match.home, flag: "" }) : null;
-                  const awayTeam = match.away ? (teamMap[match.away] || { name: match.away, flag: "" }) : null;
-                  const homePlaceholder = getPlaceholderName(match.id, "home");
-                  const awayPlaceholder = getPlaceholderName(match.id, "away");
-                  const showResults = match.scoreHome !== "" && match.scoreAway !== "";
-                  const brParts = getBrasiliaDateTimeParts(match.date, match.localTime, match.fuso);
-                  const brDate = brParts.date;
-                  const brTime = brParts.time;
+              <div className="space-y-10">
+                {/* 1. PRÓXIMOS JOGOS */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-extrabold text-emerald-400 uppercase tracking-wider pl-1 flex items-center gap-2">
+                    <Play className="w-4 h-4 text-emerald-500 animate-pulse" /> 
+                    <span>Próximos Jogos ({upcomingGroups.reduce((acc, g) => acc + g.matches.length, 0)})</span>
+                  </h3>
                   
-                  const isMatchHighlighted = searchTerm && (
-                    (homeTeam && homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (awayTeam && awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    match.round?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    match.stageName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    match.estadio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    match.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
-                  );
-
-                  return (
-                    <div 
-                      key={match.id}
-                      onClick={() => {
-                        if (match.isKnockout) {
-                          openEditMatch(match, match.stageKey);
-                        } else {
-                          openEditMatch(match, "group", match.groupKey);
-                        }
-                      }}
-                      className={`border p-4.5 rounded-2xl transition duration-200 cursor-pointer flex flex-col justify-between group shadow-md hover:-translate-y-0.5 hover:shadow-lg ${
-                        isMatchHighlighted 
-                          ? "bg-emerald-500/10 border-emerald-500/35 shadow-emerald-500/5 hover:border-emerald-500/40 match-card-highlighted" 
-                          : "bg-slate-900 border-slate-900/60 hover:border-slate-800"
-                      }`}
-                    >
-                      {/* Card Header: Group/Knockout info & Date */}
-                      <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-950 pb-2.5 mb-3.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] uppercase tracking-wider border ${
-                            match.isKnockout 
-                              ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" 
-                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          }`}>
-                            {match.stageName}
-                          </span>
-                        </div>
-                        <span className="text-slate-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900 text-[10px] md:text-xs font-mono">
-                          {brDate}
-                        </span>
-                      </div>
-
-                      {/* Scoreline */}
-                      <div className="flex justify-between items-center gap-2 py-2">
-                        {/* Home Team */}
-                        <div className="flex items-center gap-2 max-w-[42%] truncate">
-                          {homeTeam ? (
-                            <>
-                              <TeamFlag teamId={match.home} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
-                              <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{homeTeam.name}</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="inline-block shrink-0 text-xs">🏳️</span>
-                              <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{homePlaceholder}</span>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Scores */}
-                        <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-900 shrink-0 font-mono text-xs md:text-sm font-bold min-w-[50px] justify-center">
-                          {showResults ? (
-                            <div className="flex items-center gap-0.5">
-                              {match.penHome !== "" && (
-                                <span className="text-[10px] text-slate-500 mr-0.5">({match.penHome})</span>
-                              )}
-                              <span className="text-slate-100">{match.scoreHome}</span>
-                              <span className="text-slate-600 px-0.5">-</span>
-                              <span className="text-slate-100">{match.scoreAway}</span>
-                              {match.penAway !== "" && (
-                                <span className="text-[10px] text-slate-500 ml-0.5">({match.penAway})</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider px-1 font-sans">Editar</span>
-                          )}
-                        </div>
-
-                        {/* Away Team */}
-                        <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
-                          {awayTeam ? (
-                            <>
-                              <span className="font-bold text-xs md:text-sm text-slate-100 truncate">{awayTeam.name}</span>
-                              <TeamFlag teamId={match.away} className="w-5.5 h-3.5 object-cover rounded shadow-xs shrink-0" />
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-slate-500 text-[11px] md:text-xs font-medium italic truncate">{awayPlaceholder}</span>
-                              <span className="inline-block shrink-0 text-xs">🏳️</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Venue and Clock footer */}
-                      <div className="mt-4 pt-2.5 border-t border-slate-950/70 flex flex-col gap-1 text-[11px] text-slate-500">
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-emerald-500/70" /> 
-                            <span>DF: <strong className="text-slate-350 font-extrabold">{brTime}</strong></span>
-                          </span>
-                          <span className="font-mono text-slate-500">Local: {match.date} {match.localTime} ({match.fuso})</span>
-                        </div>
-                        <div className="flex justify-between items-center gap-2 mt-1">
-                          <div className="flex items-center gap-1.5 text-slate-500 min-w-0 max-w-[60%]">
-                            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-600" />
-                            <span className="truncate">{match.estadio} ({match.cidade})</span>
+                  {upcomingGroups.length > 0 ? (
+                    <div className="space-y-8">
+                      {upcomingGroups.map(group => (
+                        <div key={group.friendlyDate} className="space-y-3">
+                          <div className="flex items-center gap-2 px-1">
+                            <span className="text-xs font-bold text-slate-350 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full shadow-xs">
+                              {group.friendlyDate}
+                            </span>
+                            <div className="h-[1px] flex-1 bg-slate-900"></div>
                           </div>
-                          
-                          {/* Calendar Menu */}
-                          <div className="relative shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveCalendarMenu(activeCalendarMenu === match.id ? null : match.id);
-                              }}
-                              className="flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-emerald-400 bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-900 transition cursor-pointer"
-                            >
-                              <Calendar className="w-3 h-3 text-emerald-400" />
-                              <span>Salvar Agenda</span>
-                            </button>
-                            
-                            {activeCalendarMenu === match.id && (
-                              <div className="absolute right-0 bottom-full mb-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-20 flex flex-col gap-1 text-[10px] font-bold animate-fade-in">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveCalendarMenu(null);
-                                    window.open(generateGoogleCalendarUrl(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder), '_blank');
-                                  }}
-                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
-                                >
-                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                                  <span>Google Agenda</span>
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveCalendarMenu(null);
-                                    downloadIcsFile(match, homeTeam?.name || homePlaceholder, awayTeam?.name || awayPlaceholder);
-                                  }}
-                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-slate-100 hover:bg-slate-900 transition flex items-center gap-2 cursor-pointer"
-                                >
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                  <span>Apple / Outlook / ICS</span>
-                                </button>
-                              </div>
-                            )}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+                            {group.matches.map(match => renderCalendarMatchCard(match))}
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  );
-                })}
+                  ) : (
+                    <div className="bg-slate-900/10 border border-slate-900/40 p-6 rounded-2xl text-center text-xs text-slate-500 italic">
+                      Nenhum jogo agendado nos filtros selecionados.
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. JOGOS FINALIZADOS */}
+                <div className="space-y-4 pt-4 border-t border-slate-900/40">
+                  <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider pl-1 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-slate-500" /> 
+                    <span>Jogos Finalizados ({playedGroups.reduce((acc, g) => acc + g.matches.length, 0)})</span>
+                  </h3>
+
+                  {playedGroups.length > 0 ? (
+                    <div className="space-y-8">
+                      {playedGroups.map(group => (
+                        <div key={group.friendlyDate} className="space-y-3">
+                          <div className="flex items-center gap-2 px-1">
+                            <span className="text-xs font-bold text-slate-300 bg-slate-900 border border-slate-850 px-3 py-1 rounded-full shadow-xs">
+                              {group.friendlyDate}
+                            </span>
+                            <div className="h-[1px] flex-1 bg-slate-900/60"></div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+                            {group.matches.map(match => renderCalendarMatchCard(match))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-900/10 border border-slate-900/40 p-6 rounded-2xl text-center text-xs text-slate-500 italic">
+                      Nenhum jogo finalizado nos filtros selecionados.
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="bg-slate-900/10 border border-slate-900 p-12 rounded-2xl text-center">

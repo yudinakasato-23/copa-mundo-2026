@@ -67,9 +67,10 @@ async function main() {
     // 3. Propagate bracket dependencies
     const finalKnockoutBrackets = triggerKnockoutPropagation(updatedMatches);
 
-    // 4. Batch upsert the changes
-    const allUpdates = [
-      ...updatedMatches.map(m => ({
+    // 4. Batch upsert the changes (deduplicated by ID)
+    const uniqueUpdatesMap = new Map();
+    updatedMatches.forEach(m => {
+      uniqueUpdatesMap.set(m.id, {
         id: m.id,
         home: m.home,
         away: m.away,
@@ -85,9 +86,12 @@ async function main() {
         fuso: m.fuso,
         pais: m.pais,
         bandeira: m.bandeira
-      })),
-      ...finalKnockoutBrackets
-    ];
+      });
+    });
+    finalKnockoutBrackets.forEach(m => {
+      uniqueUpdatesMap.set(m.id, m);
+    });
+    const allUpdates = Array.from(uniqueUpdatesMap.values());
 
     const { error: upsertError } = await supabase.from('matches').upsert(allUpdates, { onConflict: 'id' });
     if (upsertError) throw upsertError;
