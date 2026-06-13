@@ -2853,11 +2853,57 @@ export default function App() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 max-w-[42%] truncate justify-end">
+                    <div className="flex items-center gap-2 max-w-[42%] truncate justify-end font-sans">
                       <span className="font-bold text-sm md:text-base text-slate-100 truncate">{awayTeam.name}</span>
                       <TeamFlag teamId={match.away} />
                     </div>
                   </div>
+
+                  {/* Goals and Cards details */}
+                  {showResults && (
+                    ((match.goalsHome && match.goalsHome.length > 0) || 
+                     (match.goalsAway && match.goalsAway.length > 0) || 
+                     (match.cardsHome && match.cardsHome.length > 0) || 
+                     (match.cardsAway && match.cardsAway.length > 0)) ? (
+                       <div className="mt-2.5 pt-2.5 border-t border-slate-950/40 grid grid-cols-2 gap-4 text-[10px] text-slate-455 font-medium">
+                         {/* Home events */}
+                         <div className="flex flex-col gap-1.5 border-r border-slate-950/30 pr-2">
+                           {(match.goalsHome || []).map((g, i) => (
+                             <div key={`group-g-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                               <span className="text-[11px]" title="Gol">⚽</span>
+                               <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                             </div>
+                           ))}
+                           {(match.cardsHome || []).map((c, i) => (
+                             <div key={`group-c-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                               <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                                 {c.type === 'red' ? '🟥' : '🟨'}
+                               </span>
+                               <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                             </div>
+                           ))}
+                         </div>
+
+                         {/* Away events */}
+                         <div className="flex flex-col gap-1.5 pl-2 text-right">
+                           {(match.goalsAway || []).map((g, i) => (
+                             <div key={`group-g-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                               <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                               <span className="text-[11px]" title="Gol">⚽</span>
+                             </div>
+                           ))}
+                           {(match.cardsAway || []).map((c, i) => (
+                             <div key={`group-c-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                               <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                               <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                                 {c.type === 'red' ? '🟥' : '🟨'}
+                               </span>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     ) : null
+                  )}
 
                   {(() => {
                     if (!isSimulationMode) return null;
@@ -4161,6 +4207,55 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Goals and Cards details inside Bottom Sheet */}
+                {((selectedMatch.goalsHome && selectedMatch.goalsHome.length > 0) || 
+                  (selectedMatch.goalsAway && selectedMatch.goalsAway.length > 0) || 
+                  (selectedMatch.cardsHome && selectedMatch.cardsHome.length > 0) || 
+                  (selectedMatch.cardsAway && selectedMatch.cardsAway.length > 0)) ? (
+                    <div className="bg-slate-900 border border-slate-905 p-3.5 rounded-xl space-y-3">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-0.5 border-b border-slate-950 pb-1.5">
+                        Acontecimentos da Partida
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-[10px] text-slate-400 font-medium">
+                        {/* Home events */}
+                        <div className="flex flex-col gap-1.5 border-r border-slate-950/30 pr-2">
+                          {(selectedMatch.goalsHome || []).map((g, i) => (
+                            <div key={`modal-g-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                              <span className="text-[11px]" title="Gol">⚽</span>
+                              <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                            </div>
+                          ))}
+                          {(selectedMatch.cardsHome || []).map((c, i) => (
+                            <div key={`modal-c-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                              <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                                {c.type === 'red' ? '🟥' : '🟨'}
+                              </span>
+                              <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Away events */}
+                        <div className="flex flex-col gap-1.5 pl-2 text-right">
+                          {(selectedMatch.goalsAway || []).map((g, i) => (
+                            <div key={`modal-g-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                              <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                              <span className="text-[11px]" title="Gol">⚽</span>
+                            </div>
+                          ))}
+                          {(selectedMatch.cardsAway || []).map((c, i) => (
+                            <div key={`modal-c-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                              <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                              <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                                {c.type === 'red' ? '🟥' : '🟨'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
                 {/* Panel Actions */}
                 <div className="flex gap-2 pt-3">
                   <button 
@@ -4416,6 +4511,52 @@ function KnockoutMatchCard({ match, stage, teamMap, onClick }) {
           </div>
         </div>
       </div>
+
+      {/* Goals and Cards details */}
+      {hasPlayed && (
+        ((match.goalsHome && match.goalsHome.length > 0) || 
+         (match.goalsAway && match.goalsAway.length > 0) || 
+         (match.cardsHome && match.cardsHome.length > 0) || 
+         (match.cardsAway && match.cardsAway.length > 0)) ? (
+           <div className="mt-2 pt-2 border-t border-slate-950/20 grid grid-cols-2 gap-3 text-[9px] text-slate-450 font-medium">
+             {/* Home events */}
+             <div className="flex flex-col gap-1 border-r border-slate-950/20 pr-1.5">
+               {(match.goalsHome || []).map((g, i) => (
+                 <div key={`ko-g-home-${i}`} className="flex items-center gap-1 justify-start text-slate-350 hover:text-slate-200 transition">
+                   <span className="text-[10px]" title="Gol">⚽</span>
+                   <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                 </div>
+               ))}
+               {(match.cardsHome || []).map((c, i) => (
+                 <div key={`ko-c-home-${i}`} className="flex items-center gap-1 justify-start text-slate-350 hover:text-slate-200 transition">
+                   <span className="text-[10px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                     {c.type === 'red' ? '🟥' : '🟨'}
+                   </span>
+                   <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                 </div>
+               ))}
+             </div>
+
+             {/* Away events */}
+             <div className="flex flex-col gap-1 pl-1.5 text-right">
+               {(match.goalsAway || []).map((g, i) => (
+                 <div key={`ko-g-away-${i}`} className="flex items-center gap-1 justify-end text-slate-350 hover:text-slate-200 transition">
+                   <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                   <span className="text-[10px]" title="Gol">⚽</span>
+                 </div>
+               ))}
+               {(match.cardsAway || []).map((c, i) => (
+                 <div key={`ko-c-away-${i}`} className="flex items-center gap-1 justify-end text-slate-350 hover:text-slate-200 transition">
+                   <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                   <span className="text-[10px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                     {c.type === 'red' ? '🟥' : '🟨'}
+                   </span>
+                 </div>
+               ))}
+             </div>
+           </div>
+         ) : null
+      )}
 
       {/* Date & Venue Info */}
       {match.date && (
