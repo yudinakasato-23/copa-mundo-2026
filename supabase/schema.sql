@@ -21,6 +21,11 @@ CREATE TABLE IF NOT EXISTS copa_2026.matches (
     fuso text NOT NULL,                    
     pais text NOT NULL,                    
     bandeira text NOT NULL,                
+    official boolean DEFAULT false,
+    goals_home jsonb DEFAULT '[]'::jsonb,
+    goals_away jsonb DEFAULT '[]'::jsonb,
+    cards_home jsonb DEFAULT '[]'::jsonb,
+    cards_away jsonb DEFAULT '[]'::jsonb,
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

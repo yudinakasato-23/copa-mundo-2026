@@ -400,6 +400,7 @@ export default function App() {
   // Custom simulation and admin states
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [dbHasOfficial, setDbHasOfficial] = useState(false);
   const [officialGroupMatches, setOfficialGroupMatches] = useState(null);
   const [officialKnockoutMatches, setOfficialKnockoutMatches] = useState(null);
   const [slideDirection, setSlideDirection] = useState("right"); // "right" | "left"
@@ -968,10 +969,10 @@ export default function App() {
       }
 
       // 3. Status filter
-      const hasPlayed = match.scoreHome !== "" && match.scoreAway !== "";
+      const isOfficialPlayed = match.scoreHome !== "" && match.scoreAway !== "" && match.official === true;
       if (calendarStatusFilter !== "all") {
-        if (calendarStatusFilter === "played" && !hasPlayed) return false;
-        if (calendarStatusFilter === "scheduled" && hasPlayed) return false;
+        if (calendarStatusFilter === "played" && !isOfficialPlayed) return false;
+        if (calendarStatusFilter === "scheduled" && isOfficialPlayed) return false;
       }
 
       return true;
@@ -983,8 +984,8 @@ export default function App() {
     const upcoming = [];
     
     filteredMatches.forEach(match => {
-      const hasPlayed = match.scoreHome !== "" && match.scoreAway !== "";
-      if (hasPlayed) {
+      const isOfficialPlayed = match.scoreHome !== "" && match.scoreAway !== "" && match.official === true;
+      if (isOfficialPlayed) {
         played.push(match);
       } else {
         upcoming.push(match);
@@ -1053,7 +1054,7 @@ export default function App() {
       >
         {/* Card Header: Group/Knockout info & Date */}
         <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-950 pb-2.5 mb-3.5">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 font-bold">
             <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] uppercase tracking-wider border ${
               match.isKnockout 
                 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" 
@@ -1061,6 +1062,15 @@ export default function App() {
             }`}>
               {match.stageName}
             </span>
+            {showResults && (
+              <span className={`px-2 py-0.5 rounded-full font-extrabold text-[9px] uppercase tracking-wider border ${
+                match.official 
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                  : "bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse"
+              }`}>
+                {match.official ? "Finalizado" : "Previsão"}
+              </span>
+            )}
           </div>
           <span className="text-slate-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900 text-[10px] md:text-xs font-mono">
             {brDate}
@@ -1118,6 +1128,56 @@ export default function App() {
             )}
           </div>
         </div>
+
+        {/* Goals and Cards details */}
+        {showResults && (
+          ((match.goalsHome && match.goalsHome.length > 0) || 
+           (match.goalsAway && match.goalsAway.length > 0) || 
+           (match.cardsHome && match.cardsHome.length > 0) || 
+           (match.cardsAway && match.cardsAway.length > 0)) ? (
+            <div className="mt-3.5 pt-3.5 border-t border-slate-950/40 grid grid-cols-2 gap-4 text-[10px] text-slate-400 font-medium">
+              {/* Home events */}
+              <div className="flex flex-col gap-1.5 border-r border-slate-950/30 pr-2">
+                {/* Home Goals */}
+                {(match.goalsHome || []).map((g, i) => (
+                  <div key={`g-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                    <span className="text-[11px]" title="Gol">⚽</span>
+                    <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                  </div>
+                ))}
+                {/* Home Cards */}
+                {(match.cardsHome || []).map((c, i) => (
+                  <div key={`c-home-${i}`} className="flex items-center gap-1.5 justify-start text-slate-350 hover:text-slate-200 transition">
+                    <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                      {c.type === 'red' ? '🟥' : '🟨'}
+                    </span>
+                    <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Away events */}
+              <div className="flex flex-col gap-1.5 pl-2 text-right">
+                {/* Away Goals */}
+                {(match.goalsAway || []).map((g, i) => (
+                  <div key={`g-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                    <span className="truncate">{g.player} <span className="text-slate-550 font-mono">({g.minute})</span></span>
+                    <span className="text-[11px]" title="Gol">⚽</span>
+                  </div>
+                ))}
+                {/* Away Cards */}
+                {(match.cardsAway || []).map((c, i) => (
+                  <div key={`c-away-${i}`} className="flex items-center gap-1.5 justify-end text-slate-350 hover:text-slate-200 transition">
+                    <span className="truncate">{c.player} <span className="text-slate-550 font-mono">({c.minute})</span></span>
+                    <span className="text-[11px] shrink-0" title={c.type === 'red' ? 'Cartão Vermelho' : 'Cartão Amarelo'}>
+                      {c.type === 'red' ? '🟥' : '🟨'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null
+        )}
 
         {(() => {
           if (!isSimulationMode) return null;
@@ -1262,7 +1322,7 @@ export default function App() {
     // Map group matches
     Object.keys(gMatches).forEach(groupKey => {
       gMatches[groupKey].forEach(m => {
-        updates.push({
+        const item = {
           id: m.id,
           home: m.home,
           away: m.away,
@@ -1278,14 +1338,22 @@ export default function App() {
           fuso: m.fuso,
           pais: m.pais,
           bandeira: m.bandeira
-        });
+        };
+        if (dbHasOfficial) {
+          item.official = m.official ?? false;
+          item.goals_home = m.goalsHome || [];
+          item.goals_away = m.goalsAway || [];
+          item.cards_home = m.cardsHome || [];
+          item.cards_away = m.cardsAway || [];
+        }
+        updates.push(item);
       });
     });
 
     // Map knockout matches
     Object.keys(kMatches).forEach(stage => {
       kMatches[stage].forEach(m => {
-        updates.push({
+        const item = {
           id: m.id,
           home: m.home || "",
           away: m.away || "",
@@ -1301,7 +1369,15 @@ export default function App() {
           fuso: m.fuso || 'UTC-5',
           pais: m.pais || 'A definir',
           bandeira: m.bandeira || '🏳️'
-        });
+        };
+        if (dbHasOfficial) {
+          item.official = m.official ?? false;
+          item.goals_home = m.goalsHome || [];
+          item.goals_away = m.goalsAway || [];
+          item.cards_home = m.cardsHome || [];
+          item.cards_away = m.cardsAway || [];
+        }
+        updates.push(item);
       });
     });
 
@@ -1400,6 +1476,9 @@ export default function App() {
           if (error) throw error;
 
           if (data && data.length > 0) {
+            const hasOfficialCol = 'official' in data[0];
+            setDbHasOfficial(hasOfficialCol);
+
             data.forEach(m => {
               const isKnockout = m.id.includes('-') || m.id.startsWith('T3') || m.id.startsWith('FI');
               
@@ -1413,6 +1492,19 @@ export default function App() {
                   match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
                   match.penHome = m.pen_home !== null ? m.pen_home.toString() : "";
                   match.penAway = m.pen_away !== null ? m.pen_away.toString() : "";
+                  if (hasOfficialCol) {
+                    match.official = m.official ?? false;
+                    match.goalsHome = m.goals_home || [];
+                    match.goalsAway = m.goals_away || [];
+                    match.cardsHome = m.cards_home || [];
+                    match.cardsAway = m.cards_away || [];
+                  } else {
+                    match.official = false;
+                    match.goalsHome = [];
+                    match.goalsAway = [];
+                    match.cardsHome = [];
+                    match.cardsAway = [];
+                  }
                 }
               } else {
                 const groupKey = m.id.charAt(0);
@@ -1420,6 +1512,19 @@ export default function App() {
                 if (match) {
                   match.scoreHome = m.score_home !== null ? m.score_home.toString() : "";
                   match.scoreAway = m.score_away !== null ? m.score_away.toString() : "";
+                  if (hasOfficialCol) {
+                    match.official = m.official ?? false;
+                    match.goalsHome = m.goals_home || [];
+                    match.goalsAway = m.goals_away || [];
+                    match.cardsHome = m.cards_home || [];
+                    match.cardsAway = m.cards_away || [];
+                  } else {
+                    match.official = false;
+                    match.goalsHome = [];
+                    match.goalsAway = [];
+                    match.cardsHome = [];
+                    match.cardsAway = [];
+                  }
                 }
               }
             });
@@ -1880,7 +1985,7 @@ export default function App() {
   };
 
   // Simulate full knockout bracket sequentially and returns state
-  const simulateFullKnockoutState = (currentGroupMatches) => {
+  const simulateFullKnockoutState = (currentGroupMatches, existingKnockout = null, forceSimulate = false) => {
     const standings = {};
     Object.keys(INITIAL_GROUPS_DATA).forEach(groupKey => {
       standings[groupKey] = INITIAL_GROUPS_DATA[groupKey].teams.map(team => ({
@@ -1951,30 +2056,61 @@ export default function App() {
       { home: getTeam(firsts, "J"), away: getTeam(firsts, "L") }
     ];
 
-    // Sim R32
-    const simR32 = r32Teams.map((m, idx) => {
-      if (!m.home || !m.away) return { id: `R32-${idx + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
-      const { sh, sa } = simulateMatchScore(m.home, m.away);
-      let ph = ""; let pa = "";
-      if (sh === sa) {
-        ph = Math.random() > 0.5 ? "5" : "4";
-        pa = ph === "5" ? "4" : "5";
-      }
-      return { id: `R32-${idx + 1}`, home: m.home, away: m.away, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
-    });
+    const shouldSimulate = isSimulationMode || forceSimulate;
 
     const getWinnerSim = (match) => {
+      if (!match || match.scoreHome === "" || match.scoreAway === "") return null;
       const sh = parseInt(match.scoreHome, 10);
       const sa = parseInt(match.scoreAway, 10);
+      if (isNaN(sh) || isNaN(sa)) return null;
       if (sh > sa) return match.home;
       if (sa > sh) return match.away;
-      return parseInt(match.penHome, 10) > parseInt(match.penAway, 10) ? match.home : match.away;
+      const ph = parseInt(match.penHome, 10);
+      const pa = parseInt(match.penAway, 10);
+      if (isNaN(ph) || isNaN(pa)) return sh > sa ? match.home : match.away; // fallback
+      return ph > pa ? match.home : match.away;
     };
 
     const getLoserSim = (match) => {
       const w = getWinnerSim(match);
+      if (!w) return null;
       return w === match.home ? match.away : match.home;
     };
+
+    // Sim R32
+    const simR32 = r32Teams.map((tmpl, idx) => {
+      const matchId = `R32-${idx + 1}`;
+      const existing = existingKnockout?.R32?.find(x => x.id === matchId);
+      const home = tmpl.home;
+      const away = tmpl.away;
+      
+      if (!home || !away) {
+        return { id: matchId, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      const teamsMatch = existing && existing.home === home && existing.away === away;
+      const hasExistingScore = existing && existing.scoreHome !== "" && existing.scoreAway !== "";
+      
+      if (teamsMatch && (hasExistingScore || existing.official)) {
+        return {
+          ...existing,
+          home,
+          away
+        };
+      }
+      
+      if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(home, away);
+        let ph = ""; let pa = "";
+        if (sh === sa) {
+          ph = Math.random() > 0.5 ? "5" : "4";
+          pa = ph === "5" ? "4" : "5";
+        }
+        return { id: matchId, home, away, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa, official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      return { id: matchId, home, away, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+    });
 
     // Sim R16
     const r16Mapping = [
@@ -1982,13 +2118,34 @@ export default function App() {
       { hIdx: 8, aIdx: 9 }, { hIdx: 10, aIdx: 11 }, { hIdx: 12, aIdx: 13 }, { hIdx: 14, aIdx: 15 }
     ];
     const simR16 = r16Mapping.map((map, idx) => {
+      const matchId = `R16-${idx + 1}`;
+      const existing = existingKnockout?.R16?.find(x => x.id === matchId);
       const h = getWinnerSim(simR32[map.hIdx]);
       const a = getWinnerSim(simR32[map.aIdx]);
-      if (!h || !a) return { id: `R16-${idx + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
-      const { sh, sa } = simulateMatchScore(h, a);
-      let ph = ""; let pa = "";
-      if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
-      return { id: `R16-${idx + 1}`, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      
+      if (!h || !a) {
+        return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      const teamsMatch = existing && existing.home === h && existing.away === a;
+      const hasExistingScore = existing && existing.scoreHome !== "" && existing.scoreAway !== "";
+      
+      if (teamsMatch && (hasExistingScore || existing.official)) {
+        return {
+          ...existing,
+          home: h,
+          away: a
+        };
+      }
+      
+      if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(h, a);
+        let ph = ""; let pa = "";
+        if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
+        return { id: matchId, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa, official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
     });
 
     // Sim QF
@@ -1996,47 +2153,111 @@ export default function App() {
       { hIdx: 0, aIdx: 1 }, { hIdx: 2, aIdx: 3 }, { hIdx: 4, aIdx: 5 }, { hIdx: 6, aIdx: 7 }
     ];
     const simQF = qfMapping.map((map, idx) => {
+      const matchId = `QF-${idx + 1}`;
+      const existing = existingKnockout?.QF?.find(x => x.id === matchId);
       const h = getWinnerSim(simR16[map.hIdx]);
       const a = getWinnerSim(simR16[map.aIdx]);
-      if (!h || !a) return { id: `QF-${idx + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
-      const { sh, sa } = simulateMatchScore(h, a);
-      let ph = ""; let pa = "";
-      if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
-      return { id: `QF-${idx + 1}`, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      
+      if (!h || !a) {
+        return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      const teamsMatch = existing && existing.home === h && existing.away === a;
+      const hasExistingScore = existing && existing.scoreHome !== "" && existing.scoreAway !== "";
+      
+      if (teamsMatch && (hasExistingScore || existing.official)) {
+        return {
+          ...existing,
+          home: h,
+          away: a
+        };
+      }
+      
+      if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(h, a);
+        let ph = ""; let pa = "";
+        if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
+        return { id: matchId, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa, official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
     });
 
     // Sim SF
     const sfMapping = [{ hIdx: 0, aIdx: 1 }, { hIdx: 2, aIdx: 3 }];
     const simSF = sfMapping.map((map, idx) => {
+      const matchId = `SF-${idx + 1}`;
+      const existing = existingKnockout?.SF?.find(x => x.id === matchId);
       const h = getWinnerSim(simQF[map.hIdx]);
       const a = getWinnerSim(simQF[map.aIdx]);
-      if (!h || !a) return { id: `SF-${idx + 1}`, home: null, away: null, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
-      const { sh, sa } = simulateMatchScore(h, a);
-      let ph = ""; let pa = "";
-      if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
-      return { id: `SF-${idx + 1}`, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      
+      if (!h || !a) {
+        return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      const teamsMatch = existing && existing.home === h && existing.away === a;
+      const hasExistingScore = existing && existing.scoreHome !== "" && existing.scoreAway !== "";
+      
+      if (teamsMatch && (hasExistingScore || existing.official)) {
+        return {
+          ...existing,
+          home: h,
+          away: a
+        };
+      }
+      
+      if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(h, a);
+        let ph = ""; let pa = "";
+        if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
+        return { id: matchId, home: h, away: a, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa, official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
+      }
+      
+      return { id: matchId, home: h, away: a, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
     });
 
     // Sim T3
     const hT3 = getLoserSim(simSF[0]);
     const aT3 = getLoserSim(simSF[1]);
-    let simT3 = { id: "T3-1", home: hT3, away: aT3, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
+    const existingT3 = existingKnockout?.T3?.[0];
+    let simT3 = { id: "T3-1", home: hT3, away: aT3, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
     if (hT3 && aT3) {
-      const { sh, sa } = simulateMatchScore(hT3, aT3);
-      let ph = ""; let pa = "";
-      if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
-      simT3 = { ...simT3, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      const teamsMatch = existingT3 && existingT3.home === hT3 && existingT3.away === aT3;
+      const hasExistingScore = existingT3 && existingT3.scoreHome !== "" && existingT3.scoreAway !== "";
+      if (teamsMatch && (hasExistingScore || existingT3.official)) {
+        simT3 = {
+          ...existingT3,
+          home: hT3,
+          away: aT3
+        };
+      } else if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(hT3, aT3);
+        let ph = ""; let pa = "";
+        if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
+        simT3 = { ...simT3, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      }
     }
 
     // Sim FI
     const hFI = getWinnerSim(simSF[0]);
     const aFI = getWinnerSim(simSF[1]);
-    let simFI = { id: "FI-1", home: hFI, away: aFI, scoreHome: "", scoreAway: "", penHome: "", penAway: "" };
+    const existingFI = existingKnockout?.FI?.[0];
+    let simFI = { id: "FI-1", home: hFI, away: aFI, scoreHome: "", scoreAway: "", penHome: "", penAway: "", official: false, goalsHome: [], goalsAway: [], cardsHome: [], cardsAway: [] };
     if (hFI && aFI) {
-      const { sh, sa } = simulateMatchScore(hFI, aFI);
-      let ph = ""; let pa = "";
-      if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
-      simFI = { ...simFI, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      const teamsMatch = existingFI && existingFI.home === hFI && existingFI.away === aFI;
+      const hasExistingScore = existingFI && existingFI.scoreHome !== "" && existingFI.scoreAway !== "";
+      if (teamsMatch && (hasExistingScore || existingFI.official)) {
+        simFI = {
+          ...existingFI,
+          home: hFI,
+          away: aFI
+        };
+      } else if (shouldSimulate) {
+        const { sh, sa } = simulateMatchScore(hFI, aFI);
+        let ph = ""; let pa = "";
+        if (sh === sa) { ph = Math.random() > 0.5 ? "5" : "4"; pa = ph === "5" ? "4" : "5"; }
+        simFI = { ...simFI, scoreHome: sh.toString(), scoreAway: sa.toString(), penHome: ph, penAway: pa };
+      }
     }
 
     return {
@@ -2065,7 +2286,7 @@ export default function App() {
 
     setIsSimulating(true);
     const simulatedGroups = simulateGroupStage();
-    const simulatedKnockout = simulateFullKnockoutState(simulatedGroups);
+    const simulatedKnockout = simulateFullKnockoutState(simulatedGroups, null, true);
     
     setGroupMatches(simulatedGroups);
     setKnockoutMatches(simulatedKnockout);
@@ -2156,12 +2377,21 @@ export default function App() {
         ...groupMatches,
         [selectedMatch.groupKey]: groupMatches[selectedMatch.groupKey].map(m => {
           if (m.id === selectedMatch.id) {
-            return { ...m, scoreHome: sh, scoreAway: sa };
+            return { 
+              ...m, 
+              scoreHome: sh, 
+              scoreAway: sa, 
+              official: false,
+              goalsHome: [],
+              goalsAway: [],
+              cardsHome: [],
+              cardsAway: []
+            };
           }
           return m;
         })
       };
-      updatedKnockout = simulateFullKnockoutState(updatedGroups);
+      updatedKnockout = simulateFullKnockoutState(updatedGroups, knockoutMatches);
       setGroupMatches(updatedGroups);
       setKnockoutMatches(updatedKnockout);
     } else {
@@ -2175,7 +2405,12 @@ export default function App() {
               scoreHome: sh, 
               scoreAway: sa,
               penHome: ph,
-              penAway: pa
+              penAway: pa,
+              official: false,
+              goalsHome: [],
+              goalsAway: [],
+              cardsHome: [],
+              cardsAway: []
             };
           }
           return m;
@@ -2196,16 +2431,25 @@ export default function App() {
           const penHomeVal = ph === "" ? null : parseInt(ph, 10);
           const penAwayVal = pa === "" ? null : parseInt(pa, 10);
 
+          const updatePayload = {
+            score_home: scoreHomeVal,
+            score_away: scoreAwayVal,
+            pen_home: penHomeVal,
+            pen_away: penAwayVal,
+            home: selectedMatch.home || "",
+            away: selectedMatch.away || ""
+          };
+          if (dbHasOfficial) {
+            updatePayload.official = false;
+            updatePayload.goals_home = [];
+            updatePayload.goals_away = [];
+            updatePayload.cards_home = [];
+            updatePayload.cards_away = [];
+          }
+
           const { error } = await supabase
             .from('matches')
-            .update({
-              score_home: scoreHomeVal,
-              score_away: scoreAwayVal,
-              pen_home: penHomeVal,
-              pen_away: penAwayVal,
-              home: selectedMatch.home || "",
-              away: selectedMatch.away || ""
-            })
+            .update(updatePayload)
             .eq('id', selectedMatch.id);
 
           if (error) throw error;
@@ -2419,7 +2663,7 @@ export default function App() {
                 [groupKey]: updatedMatchesForThisGroup
               };
 
-              const localKnockoutSync = simulateFullKnockoutState(newGroupMatchesState);
+              const localKnockoutSync = simulateFullKnockoutState(newGroupMatchesState, knockoutMatches, true);
 
               setGroupMatches(newGroupMatchesState);
               setKnockoutMatches(localKnockoutSync);
@@ -3301,7 +3545,7 @@ export default function App() {
                   Empates ativam botões de pênaltis. No celular, selecione a fase nas abas abaixo para deslizar horizontalmente.
                 </p>
               </div>
-              
+
               <button 
                 onClick={async () => {
                   const hasManualKnockoutScores = Object.values(knockoutMatches).some(stage =>
@@ -3314,7 +3558,7 @@ export default function App() {
                     if (!confirmSim) return;
                   }
 
-                  const localKnockoutSync = simulateFullKnockoutState(groupMatches);
+                  const localKnockoutSync = simulateFullKnockoutState(groupMatches, null, true);
                   setKnockoutMatches(localKnockoutSync);
                   if (isAdminMode) {
                     if (isSupabaseConfigured) {

@@ -779,7 +779,12 @@ export const generateInitialMatches = () => {
         cidade: sched ? sched.cidade : "A definir",
         fuso: sched ? sched.fuso : "UTC-5",
         pais: sched ? sched.pais : "A definir",
-        bandeira: sched ? sched.bandeira : "🏳️"
+        bandeira: sched ? sched.bandeira : "🏳️",
+        official: false,
+        goalsHome: [],
+        goalsAway: [],
+        cardsHome: [],
+        cardsAway: []
       };
     });
   });

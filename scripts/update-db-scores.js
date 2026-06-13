@@ -53,6 +53,11 @@ async function main() {
           score_away: update.scoreAway,
           pen_home: update.penHome !== undefined ? update.penHome : null,
           pen_away: update.penAway !== undefined ? update.penAway : null,
+          goals_home: update.goalsHome !== undefined ? update.goalsHome : null,
+          goals_away: update.goalsAway !== undefined ? update.goalsAway : null,
+          cards_home: update.cardsHome !== undefined ? update.cardsHome : null,
+          cards_away: update.cardsAway !== undefined ? update.cardsAway : null,
+          official: true,
           updated_at: new Date().toISOString()
         };
       }
@@ -71,21 +76,7 @@ async function main() {
     const uniqueUpdatesMap = new Map();
     updatedMatches.forEach(m => {
       uniqueUpdatesMap.set(m.id, {
-        id: m.id,
-        home: m.home,
-        away: m.away,
-        score_home: m.score_home,
-        score_away: m.score_away,
-        pen_home: m.pen_home,
-        pen_away: m.pen_away,
-        round: m.round,
-        date: m.date,
-        local_time: m.local_time,
-        estadio: m.estadio,
-        cidade: m.cidade,
-        fuso: m.fuso,
-        pais: m.pais,
-        bandeira: m.bandeira
+        ...m
       });
     });
     finalKnockoutBrackets.forEach(m => {
@@ -196,21 +187,9 @@ function triggerKnockoutPropagation(matches) {
   r32Pairings.forEach((p, idx) => {
     const existing = matches.find(m => m.id === `R32-${idx + 1}`);
     knockoutUpdates.push({
-      id: existing.id,
+      ...existing,
       home: p.home,
-      away: p.away,
-      score_home: existing.score_home,
-      score_away: existing.score_away,
-      pen_home: existing.pen_home,
-      pen_away: existing.pen_away,
-      round: existing.round,
-      date: existing.date,
-      local_time: existing.local_time,
-      estadio: existing.estadio,
-      cidade: existing.cidade,
-      fuso: existing.fuso,
-      pais: existing.pais,
-      bandeira: existing.bandeira
+      away: p.away
     });
   });
 
@@ -239,21 +218,9 @@ function triggerKnockoutPropagation(matches) {
   r16Mapping.forEach((map, idx) => {
     const existing = matches.find(m => m.id === `R16-${idx + 1}`);
     knockoutUpdates.push({
-      id: existing.id,
+      ...existing,
       home: getSimWinner(map.h, knockoutUpdates),
-      away: getSimWinner(map.a, knockoutUpdates),
-      score_home: existing.score_home,
-      score_away: existing.score_away,
-      pen_home: existing.pen_home,
-      pen_away: existing.pen_away,
-      round: existing.round,
-      date: existing.date,
-      local_time: existing.local_time,
-      estadio: existing.estadio,
-      cidade: existing.cidade,
-      fuso: existing.fuso,
-      pais: existing.pais,
-      bandeira: existing.bandeira
+      away: getSimWinner(map.a, knockoutUpdates)
     });
   });
 
@@ -265,21 +232,9 @@ function triggerKnockoutPropagation(matches) {
   qfMapping.forEach((map, idx) => {
     const existing = matches.find(m => m.id === `QF-${idx + 1}`);
     knockoutUpdates.push({
-      id: existing.id,
+      ...existing,
       home: getSimWinner(map.h, knockoutUpdates),
-      away: getSimWinner(map.a, knockoutUpdates),
-      score_home: existing.score_home,
-      score_away: existing.score_away,
-      pen_home: existing.pen_home,
-      pen_away: existing.pen_away,
-      round: existing.round,
-      date: existing.date,
-      local_time: existing.local_time,
-      estadio: existing.estadio,
-      cidade: existing.cidade,
-      fuso: existing.fuso,
-      pais: existing.pais,
-      bandeira: existing.bandeira
+      away: getSimWinner(map.a, knockoutUpdates)
     });
   });
 
@@ -288,61 +243,25 @@ function triggerKnockoutPropagation(matches) {
   sfMapping.forEach((map, idx) => {
     const existing = matches.find(m => m.id === `SF-${idx + 1}`);
     knockoutUpdates.push({
-      id: existing.id,
+      ...existing,
       home: getSimWinner(map.h, knockoutUpdates),
-      away: getSimWinner(map.a, knockoutUpdates),
-      score_home: existing.score_home,
-      score_away: existing.score_away,
-      pen_home: existing.pen_home,
-      pen_away: existing.pen_away,
-      round: existing.round,
-      date: existing.date,
-      local_time: existing.local_time,
-      estadio: existing.estadio,
-      cidade: existing.cidade,
-      fuso: existing.fuso,
-      pais: existing.pais,
-      bandeira: existing.bandeira
+      away: getSimWinner(map.a, knockoutUpdates)
     });
   });
 
   // T3 & FI
   const t3Existing = matches.find(m => m.id === "T3-1");
   knockoutUpdates.push({
-    id: t3Existing.id,
+    ...t3Existing,
     home: getSimLoser("SF-1", knockoutUpdates),
-    away: getSimLoser("SF-2", knockoutUpdates),
-    score_home: t3Existing.score_home,
-    score_away: t3Existing.score_away,
-    pen_home: t3Existing.pen_home,
-    pen_away: t3Existing.pen_away,
-    round: t3Existing.round,
-    date: t3Existing.date,
-    local_time: t3Existing.local_time,
-    estadio: t3Existing.estadio,
-    cidade: t3Existing.cidade,
-    fuso: t3Existing.fuso,
-    pais: t3Existing.pais,
-    bandeira: t3Existing.bandeira
+    away: getSimLoser("SF-2", knockoutUpdates)
   });
 
   const fiExisting = matches.find(m => m.id === "FI-1");
   knockoutUpdates.push({
-    id: fiExisting.id,
+    ...fiExisting,
     home: getSimWinner("SF-1", knockoutUpdates),
-    away: getSimWinner("SF-2", knockoutUpdates),
-    score_home: fiExisting.score_home,
-    score_away: fiExisting.score_away,
-    pen_home: fiExisting.pen_home,
-    pen_away: fiExisting.pen_away,
-    round: fiExisting.round,
-    date: fiExisting.date,
-    local_time: fiExisting.local_time,
-    estadio: fiExisting.estadio,
-    cidade: fiExisting.cidade,
-    fuso: fiExisting.fuso,
-    pais: fiExisting.pais,
-    bandeira: fiExisting.bandeira
+    away: getSimWinner("SF-2", knockoutUpdates)
   });
 
   return knockoutUpdates;
