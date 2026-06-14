@@ -1,75 +1,46 @@
 [
   {
-    "id": "A1",
-    "scoreHome": 2,
-    "scoreAway": 0,
-    "goalsHome": [
-      { "player": "Julián Quiñones", "minute": "9'" },
-      { "player": "Raúl Jiménez", "minute": "67'" }
-    ],
-    "goalsAway": [],
-    "cardsHome": [
-      { "player": "César Montes", "minute": "90+1'", "type": "red" }
-    ],
-    "cardsAway": [
-      { "player": "Sphephelo Sithole", "minute": "50'", "type": "red" },
-      { "player": "Themba Zwane", "minute": "82'", "type": "red" }
-    ]
-  },
-  {
-    "id": "A2",
-    "scoreHome": 2,
+    "id": "B2",
+    "scoreHome": 1,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Hwang In-beom", "minute": "66'" },
-      { "player": "Oh Hyeon-gyu", "minute": "79'" }
+      { "player": "Boualem Khoukhi", "minute": "90+4'" }
     ],
     "goalsAway": [
-      { "player": "Ladislav Krejčí", "minute": "58'" }
+      { "player": "Breel Embolo", "minute": "17' (pen.)" }
     ],
     "cardsHome": [
-      { "player": "Lee Gi-hyuk", "minute": "90+6'", "type": "yellow" }
+      { "player": "Mahmoud Abunada", "minute": "16'", "type": "yellow" }
     ],
     "cardsAway": []
   },
   {
-    "id": "B1",
+    "id": "C1",
     "scoreHome": 1,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Cyle Larin", "minute": "78'" }
+      { "player": "Vinícius Júnior", "minute": "32'" }
     ],
     "goalsAway": [
-      { "player": "Jovo Lukić", "minute": "21'" }
-    ],
-    "cardsHome": [],
-    "cardsAway": [
-      { "player": "Ermedin Demirović", "minute": "44'", "type": "yellow" }
-    ]
-  },
-  {
-    "id": "D1",
-    "scoreHome": 4,
-    "scoreAway": 1,
-    "goalsHome": [
-      { "player": "Damián Bobadilla (g.c.)", "minute": "7'" },
-      { "player": "Folarin Balogun", "minute": "30'" },
-      { "player": "Folarin Balogun", "minute": "49'" },
-      { "player": "Giovanni Reyna", "minute": "90+8'" }
-    ],
-    "goalsAway": [
-      { "player": "Maurício", "minute": "72'" }
+      { "player": "Ismael Saibari", "minute": "21'" }
     ],
     "cardsHome": [
-      { "player": "Tyler Adams", "minute": "59'", "type": "yellow" }
+      { "player": "Marquinhos", "minute": "45'", "type": "yellow" },
+      { "player": "Lucas Paquetá", "minute": "78'", "type": "yellow" }
     ],
-    "cardsAway": [
-      { "player": "Cáceres", "minute": "25'", "type": "yellow" },
-      { "player": "Gustavo Gómez", "minute": "40'", "type": "yellow" },
-      { "player": "Miguel Almirón", "minute": "62'", "type": "yellow" },
-      { "player": "Alex Arce", "minute": "75'", "type": "yellow" },
-      { "player": "Junior Alonso", "minute": "85'", "type": "yellow" },
-      { "player": "Diego Gómez", "minute": "88'", "type": "yellow" }
-    ]
+    "cardsAway": []
+  },
+  {
+    "id": "C2",
+    "scoreHome": 0,
+    "scoreAway": 1,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "John McGinn", "minute": "28'" }
+    ],
+    "cardsHome": [
+      { "player": "Jean-Ricner Bellegarde", "minute": "39'", "type": "yellow" }
+    ],
+    "cardsAway": []
   }
 ]
