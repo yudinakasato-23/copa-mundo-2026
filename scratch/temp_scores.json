@@ -58,13 +58,14 @@
   },
   {
     "id": "F2",
-    "scoreHome": 4,
+    "scoreHome": 5,
     "scoreAway": 1,
     "goalsHome": [
       { "player": "Yasin Ayari", "minute": "7'" },
       { "player": "Alexander Isak", "minute": "30'" },
       { "player": "Viktor Gyökeres", "minute": "60'" },
-      { "player": "Mattias Svanberg", "minute": "84'" }
+      { "player": "Mattias Svanberg", "minute": "84'" },
+      { "player": "Yasin Ayari", "minute": "90+5'" }
     ],
     "goalsAway": [
       { "player": "Omar Rekik", "minute": "43'" }
