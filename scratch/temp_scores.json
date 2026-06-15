@@ -9,7 +9,9 @@
     ],
     "goalsAway": [],
     "cardsHome": [],
-    "cardsAway": []
+    "cardsAway": [
+      { "player": "Yunus Akgün", "minute": "87'", "type": "yellow" }
+    ]
   },
   {
     "id": "E1",
@@ -53,7 +55,10 @@
       { "player": "Keito Nakamura", "minute": "57'" },
       { "player": "Daichi Kamada", "minute": "88'" }
     ],
-    "cardsHome": [],
+    "cardsHome": [
+      { "player": "Memphis Depay", "minute": "83'", "type": "yellow" },
+      { "player": "Micky van de Ven", "minute": "90+1'", "type": "yellow" }
+    ],
     "cardsAway": []
   },
   {
@@ -71,6 +76,8 @@
       { "player": "Omar Rekik", "minute": "43'" }
     ],
     "cardsHome": [],
-    "cardsAway": []
+    "cardsAway": [
+      { "player": "Rani Khedira", "minute": "54'", "type": "yellow" }
+    ]
   }
 ]

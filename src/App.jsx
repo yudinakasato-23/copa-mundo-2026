@@ -385,6 +385,20 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [calendarStageFilter, setCalendarStageFilter] = useState("all");
   const [calendarStatusFilter, setCalendarStatusFilter] = useState("all");
+  const [playedSortOrder, setPlayedSortOrder] = useState(() => {
+    try {
+      return localStorage.getItem("copa2026_playedSortOrder") || "asc";
+    } catch (e) {
+      return "asc";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("copa2026_playedSortOrder", playedSortOrder);
+    } catch (e) {}
+  }, [playedSortOrder]);
+
   const [activeCalendarMenu, setActiveCalendarMenu] = useState(null);
   const [expandedGroup, setExpandedGroup] = useState(() => {
     try {
@@ -995,7 +1009,7 @@ export default function App() {
     const todayStr = getBrasiliaTodayStr();
     const tomorrowStr = getBrasiliaTomorrowStr();
     
-    const groupMatchesFn = (list) => {
+    const groupMatchesFn = (list, isDesc = false) => {
       const groupsMap = new Map();
       list.forEach(match => {
         const brParts = getBrasiliaDateTimeParts(match.date, match.localTime, match.fuso);
@@ -1006,17 +1020,32 @@ export default function App() {
         }
         groupsMap.get(friendly).push({ ...match, brParts });
       });
-      return Array.from(groupsMap.entries()).map(([friendlyDate, matches]) => ({
-        friendlyDate,
-        matches
-      }));
+      
+      const entries = Array.from(groupsMap.entries()).map(([friendlyDate, matches]) => {
+        const sortedMatches = [...matches].sort((a, b) => {
+          const timeA = getUTCDateTime(a.date, a.localTime, a.fuso).getTime();
+          const timeB = getUTCDateTime(b.date, b.localTime, b.fuso).getTime();
+          return isDesc ? timeB - timeA : timeA - timeB;
+        });
+        return {
+          friendlyDate,
+          matches: sortedMatches,
+          timestamp: getUTCDateTime(matches[0].date, matches[0].localTime, matches[0].fuso).getTime()
+        };
+      });
+      
+      entries.sort((a, b) => {
+        return isDesc ? b.timestamp - a.timestamp : a.timestamp - b.timestamp;
+      });
+      
+      return entries;
     };
     
     return {
-      playedGroups: groupMatchesFn(played),
-      upcomingGroups: groupMatchesFn(upcoming)
+      playedGroups: groupMatchesFn(played, playedSortOrder === "desc"),
+      upcomingGroups: groupMatchesFn(upcoming, false)
     };
-  }, [filteredMatches]);
+  }, [filteredMatches, playedSortOrder]);
 
   const renderCalendarMatchCard = (match) => {
     const homeTeam = match.home ? (teamMap[match.home] || { name: match.home, flag: "" }) : null;
@@ -3526,10 +3555,39 @@ export default function App() {
 
                 {/* 2. JOGOS FINALIZADOS */}
                 <div className="space-y-4 pt-4 border-t border-slate-900/40">
-                  <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider pl-1 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-slate-500" /> 
-                    <span>Jogos Finalizados ({playedGroups.reduce((acc, g) => acc + g.matches.length, 0)})</span>
-                  </h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pl-1">
+                    <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-slate-500" /> 
+                      <span>Jogos Finalizados ({playedGroups.reduce((acc, g) => acc + g.matches.length, 0)})</span>
+                    </h3>
+                    
+                    {playedGroups.length > 0 && (
+                      <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-900 shadow-inner self-end sm:self-auto">
+                        <button
+                          onClick={() => setPlayedSortOrder("asc")}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition duration-200 cursor-pointer ${
+                            playedSortOrder === "asc"
+                              ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20"
+                              : "text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>Mais Antigos</span>
+                        </button>
+                        <button
+                          onClick={() => setPlayedSortOrder("desc")}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition duration-200 cursor-pointer ${
+                            playedSortOrder === "desc"
+                              ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20"
+                              : "text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <Clock className="w-3 h-3 rotate-180" />
+                          <span>Mais Recentes</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {playedGroups.length > 0 ? (
                     <div className="space-y-8">
