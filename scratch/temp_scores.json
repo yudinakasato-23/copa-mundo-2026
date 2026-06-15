@@ -1,46 +1,75 @@
 [
   {
-    "id": "B2",
-    "scoreHome": 1,
-    "scoreAway": 1,
+    "id": "D2",
+    "scoreHome": 2,
+    "scoreAway": 0,
     "goalsHome": [
-      { "player": "Boualem Khoukhi", "minute": "90+4'" }
+      { "player": "Nestory Irankunda", "minute": "27'" },
+      { "player": "Connor Metcalfe", "minute": "75'" }
     ],
-    "goalsAway": [
-      { "player": "Breel Embolo", "minute": "17' (pen.)" }
-    ],
-    "cardsHome": [
-      { "player": "Mahmoud Abunada", "minute": "16'", "type": "yellow" }
-    ],
+    "goalsAway": [],
+    "cardsHome": [],
     "cardsAway": []
   },
   {
-    "id": "C1",
-    "scoreHome": 1,
+    "id": "E1",
+    "scoreHome": 7,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Vinícius Júnior", "minute": "32'" }
+      { "player": "Felix Nmecha", "minute": "6'" },
+      { "player": "Nico Schlotterbeck", "minute": "38'" },
+      { "player": "Kai Havertz", "minute": "45+5' (pen.)" },
+      { "player": "Jamal Musiala", "minute": "47'" },
+      { "player": "Nathaniel Brown", "minute": "68'" },
+      { "player": "Deniz Undav", "minute": "78'" },
+      { "player": "Kai Havertz", "minute": "88'" }
     ],
     "goalsAway": [
-      { "player": "Ismael Saibari", "minute": "21'" }
+      { "player": "Livano Comenencia", "minute": "21'" }
     ],
-    "cardsHome": [
-      { "player": "Marquinhos", "minute": "45'", "type": "yellow" },
-      { "player": "Lucas Paquetá", "minute": "78'", "type": "yellow" }
-    ],
+    "cardsHome": [],
     "cardsAway": []
   },
   {
-    "id": "C2",
-    "scoreHome": 0,
-    "scoreAway": 1,
-    "goalsHome": [],
+    "id": "E2",
+    "scoreHome": 1,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Amad Diallo", "minute": "90'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "F1",
+    "scoreHome": 2,
+    "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Virgil van Dijk", "minute": "50'" },
+      { "player": "Crysencio Summerville", "minute": "64'" }
+    ],
     "goalsAway": [
-      { "player": "John McGinn", "minute": "28'" }
+      { "player": "Keito Nakamura", "minute": "57'" },
+      { "player": "Daichi Kamada", "minute": "88'" }
     ],
-    "cardsHome": [
-      { "player": "Jean-Ricner Bellegarde", "minute": "39'", "type": "yellow" }
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "F2",
+    "scoreHome": 4,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Yasin Ayari", "minute": "7'" },
+      { "player": "Alexander Isak", "minute": "30'" },
+      { "player": "Viktor Gyökeres", "minute": "60'" },
+      { "player": "Mattias Svanberg", "minute": "84'" }
     ],
+    "goalsAway": [
+      { "player": "Omar Rekik", "minute": "43'" }
+    ],
+    "cardsHome": [],
     "cardsAway": []
   }
 ]
