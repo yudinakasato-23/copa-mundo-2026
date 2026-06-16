@@ -1,49 +1,17 @@
 [
   {
-    "id": "G1",
-    "scoreHome": 1,
+    "id": "I1",
+    "scoreHome": 3,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Mohamed Hany (g.c.)", "minute": "59'" }
+      { "player": "Kylian Mbappé", "minute": "66'" },
+      { "player": "Bradley Barcola", "minute": "82'" },
+      { "player": "Kylian Mbappé", "minute": "90+6'" }
     ],
     "goalsAway": [
-      { "player": "Emam Ashour", "minute": "20'" }
+      { "player": "Ibrahim Mbaye", "minute": "90+5'" }
     ],
-    "cardsHome": [
-      { "player": "Timothy Castagne", "minute": "14'", "type": "yellow" }
-    ],
-    "cardsAway": []
-  },
-  {
-    "id": "H2",
-    "scoreHome": 1,
-    "scoreAway": 1,
-    "goalsHome": [
-      { "player": "Abdulelah Al-Amri", "minute": "41'" }
-    ],
-    "goalsAway": [
-      { "player": "Maxi Araujo", "minute": "80'" }
-    ],
-    "cardsHome": [
-      { "player": "Abdulelah Al-Amri", "minute": "44'", "type": "yellow" }
-    ],
-    "cardsAway": []
-  },
-  {
-    "id": "G2",
-    "scoreHome": 2,
-    "scoreAway": 2,
-    "goalsHome": [
-      { "player": "Ramin Rezaeian", "minute": "32'" },
-      { "player": "Mohammad Mohebbi", "minute": "64'" }
-    ],
-    "goalsAway": [
-      { "player": "Elijah Just", "minute": "7'" },
-      { "player": "Elijah Just", "minute": "54'" }
-    ],
-    "cardsHome": [
-      { "player": "Hossein Kanaanizadegan", "minute": "70'", "type": "yellow" }
-    ],
+    "cardsHome": [],
     "cardsAway": []
   }
 ]
