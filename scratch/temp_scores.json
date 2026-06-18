@@ -1,21 +1,87 @@
 [
   {
-    "id": "K2",
-    "scoreHome": 1,
-    "scoreAway": 3,
+    "id": "I2",
+    "scoreHome": 4,
+    "scoreAway": 1,
     "goalsHome": [
-      { "player": "Abbosbek Fayzullaev", "minute": "60'" }
+      { "player": "Erling Haaland", "minute": "29'" },
+      { "player": "Erling Haaland", "minute": "43'" },
+      { "player": "Leo Østigård", "minute": "76'" },
+      { "player": "Aymen Hussein (g.c.)", "minute": "90+6'" }
     ],
     "goalsAway": [
-      { "player": "Daniel Muñoz", "minute": "40'" },
-      { "player": "Luis Díaz", "minute": "65'" },
-      { "player": "Jaminton Campaz", "minute": "90+9'" }
+      { "player": "Aymen Hussein", "minute": "39'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": [
+      { "player": "Zaid Tahseen", "minute": "86'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "J2",
+    "scoreHome": 3,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Romano Schmid", "minute": "21'" },
+      { "player": "Yazan Al-Arab (g.c.)", "minute": "76'" },
+      { "player": "Marko Arnautović", "minute": "90+12' (pen.)" }
+    ],
+    "goalsAway": [
+      { "player": "Ali Olwan", "minute": "50'" }
     ],
     "cardsHome": [
-      { "player": "Abdukodir Khusanov", "minute": "34'", "type": "yellow" }
+      { "player": "Marcel Sabitzer", "minute": "77'", "type": "yellow" }
+    ],
+    "cardsAway": []
+  },
+  {
+    "id": "K1",
+    "scoreHome": 1,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "João Neves", "minute": "6'" }
+    ],
+    "goalsAway": [
+      { "player": "Yoane Wissa", "minute": "45+1'" }
+    ],
+    "cardsHome": [
+      { "player": "Bernardo Silva", "minute": "13'", "type": "yellow" },
+      { "player": "Nélson Semedo", "minute": "88'", "type": "yellow" },
+      { "player": "Tomás Araújo", "minute": "91'", "type": "yellow" }
     ],
     "cardsAway": [
-      { "player": "Johan Mojica", "minute": "7'", "type": "yellow" }
+      { "player": "Chancel Mbemba", "minute": "32'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "L2",
+    "scoreHome": 0,
+    "scoreAway": 1,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Caleb Yirenkyi", "minute": "95'" }
+    ],
+    "cardsHome": [
+      { "player": "Carlos Harvey", "minute": "98'", "type": "yellow" }
+    ],
+    "cardsAway": [
+      { "player": "Caleb Yirenkyi", "minute": "16'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "A4",
+    "scoreHome": 1,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Michal Sadílek", "minute": "6'" }
+    ],
+    "goalsAway": [
+      { "player": "Teboho Mokoena", "minute": "83' (pen.)" }
+    ],
+    "cardsHome": [],
+    "cardsAway": [
+      { "player": "Teboho Mokoena", "minute": "33'", "type": "yellow" },
+      { "player": "Mbatha", "minute": "39'", "type": "yellow" }
     ]
   }
 ]
