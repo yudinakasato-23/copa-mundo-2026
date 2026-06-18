@@ -1,15 +1,50 @@
 [
   {
-    "id": "J2",
-    "scoreHome": 3,
+    "id": "K1",
+    "scoreHome": 1,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Romano Schmid", "minute": "21'" },
-      { "player": "Yazan Al-Arab (g.c.)", "minute": "76'" },
-      { "player": "Marko Arnautović", "minute": "90+12' (pen.)" }
+      { "player": "João Neves", "minute": "6'" }
     ],
     "goalsAway": [
-      { "player": "Ali Olwan", "minute": "50'" }
+      { "player": "Yoane Wissa", "minute": "45+1'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "K2",
+    "scoreHome": 0,
+    "scoreAway": 0,
+    "goalsHome": [],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "L1",
+    "scoreHome": 4,
+    "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Harry Kane", "minute": "12' (pen.)" },
+      { "player": "Harry Kane", "minute": "42'" },
+      { "player": "Jude Bellingham", "minute": "47'" },
+      { "player": "Marcus Rashford", "minute": "85'" }
+    ],
+    "goalsAway": [
+      { "player": "Martin Baturina", "minute": "36'" },
+      { "player": "Petar Musa", "minute": "45+5'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "L2",
+    "scoreHome": 0,
+    "scoreAway": 1,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Caleb Yirenkyi", "minute": "95'" }
     ],
     "cardsHome": [],
     "cardsAway": []
