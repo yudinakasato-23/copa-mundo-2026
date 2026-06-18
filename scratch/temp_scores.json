@@ -1,13 +1,15 @@
 [
   {
-    "id": "A4",
+    "id": "K2",
     "scoreHome": 1,
-    "scoreAway": 1,
+    "scoreAway": 3,
     "goalsHome": [
-      { "player": "Michal Sadílek", "minute": "6'" }
+      { "player": "Abbosbek Fayzullaev", "minute": "60'" }
     ],
     "goalsAway": [
-      { "player": "Teboho Mokoena", "minute": "83' (pen.)" }
+      { "player": "Daniel Muñoz", "minute": "40'" },
+      { "player": "Luis Díaz", "minute": "65'" },
+      { "player": "Jaminton Campaz", "minute": "90+9'" }
     ],
     "cardsHome": [],
     "cardsAway": []
