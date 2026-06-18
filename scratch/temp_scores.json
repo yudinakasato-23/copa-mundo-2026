@@ -11,7 +11,11 @@
       { "player": "Luis Díaz", "minute": "65'" },
       { "player": "Jaminton Campaz", "minute": "90+9'" }
     ],
-    "cardsHome": [],
-    "cardsAway": []
+    "cardsHome": [
+      { "player": "Abdukodir Khusanov", "minute": "34'", "type": "yellow" }
+    ],
+    "cardsAway": [
+      { "player": "Johan Mojica", "minute": "7'", "type": "yellow" }
+    ]
   }
 ]
