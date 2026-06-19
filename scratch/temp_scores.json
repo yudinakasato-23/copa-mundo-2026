@@ -1,43 +1,16 @@
 [
   {
-    "id": "B3",
-    "scoreHome": 6,
+    "id": "A3",
+    "scoreHome": 1,
     "scoreAway": 0,
     "goalsHome": [
-      { "player": "Cyle Larin", "minute": "16'" },
-      { "player": "Jonathan David", "minute": "29'" },
-      { "player": "Jonathan David", "minute": "45+3'" },
-      { "player": "Nathan Saliba", "minute": "64'" },
-      { "player": "Mohamed Manai (g.c.)", "minute": "75'" },
-      { "player": "Jonathan David", "minute": "90+2'" }
+      { "player": "Luis Romo", "minute": "50'" }
     ],
     "goalsAway": [],
     "cardsHome": [],
     "cardsAway": [
-      { "player": "Homam Ahmed", "minute": "31'", "type": "red" },
-      { "player": "Assim Madibo", "minute": "54'", "type": "red" }
-    ]
-  },
-  {
-    "id": "B4",
-    "scoreHome": 4,
-    "scoreAway": 1,
-    "goalsHome": [
-      { "player": "Johan Manzambi", "minute": "71'" },
-      { "player": "Rubén Vargas", "minute": "84'" },
-      { "player": "Johan Manzambi", "minute": "90'" },
-      { "player": "Granit Xhaka", "minute": "90+7' (pen.)" }
-    ],
-    "goalsAway": [
-      { "player": "Ermin Mahmić", "minute": "90+3'" }
-    ],
-    "cardsHome": [
-      { "player": "Nico Elvedi", "minute": "65'", "type": "yellow" }
-    ],
-    "cardsAway": [
-      { "player": "Amar Dedic", "minute": "59'", "type": "yellow" },
-      { "player": "Edin Dzeko", "minute": "61'", "type": "yellow" },
-      { "player": "Tarik Muharemovic", "minute": "80'", "type": "red" }
+      { "player": "Lee Kang-in", "minute": "4'", "type": "yellow" },
+      { "player": "Paik Seung-ho", "minute": "58'", "type": "yellow" }
     ]
   }
 ]
