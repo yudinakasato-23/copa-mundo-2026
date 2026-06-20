@@ -1,16 +1,57 @@
 [
   {
-    "id": "A3",
-    "scoreHome": 1,
+    "id": "C3",
+    "scoreHome": 3,
     "scoreAway": 0,
     "goalsHome": [
-      { "player": "Luis Romo", "minute": "50'" }
+      { "player": "Matheus Cunha", "minute": "23'" },
+      { "player": "Matheus Cunha", "minute": "36'" },
+      { "player": "Vinícius Júnior", "minute": "45+3'" }
     ],
     "goalsAway": [],
-    "cardsHome": [],
+    "cardsHome": [
+      { "player": "Douglas Santos", "minute": "65'", "type": "yellow" }
+    ],
     "cardsAway": [
-      { "player": "Lee Kang-in", "minute": "4'", "type": "yellow" },
-      { "player": "Paik Seung-ho", "minute": "58'", "type": "yellow" }
+      { "player": "Danley Jean Jacques", "minute": "3'", "type": "yellow" },
+      { "player": "Carlens Arcus", "minute": "4'", "type": "yellow" },
+      { "player": "Frantzdy Pierrot", "minute": "45+4'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "C4",
+    "scoreHome": 0,
+    "scoreAway": 1,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Ismael Saibari", "minute": "2'" }
+    ],
+    "cardsHome": [
+      { "player": "Andy Robertson", "minute": "65'", "type": "yellow" }
+    ],
+    "cardsAway": [
+      { "player": "Issa Diop", "minute": "23'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "D3",
+    "scoreHome": 2,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Cameron Burgess (g.c.)", "minute": "11'" },
+      { "player": "Alex Freeman", "minute": "43'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [
+      { "player": "Antonee Robinson", "minute": "56'", "type": "yellow" },
+      { "player": "Folarin Balogun", "minute": "89'", "type": "yellow" },
+      { "player": "Chris Richards", "minute": "90+3'", "type": "yellow" }
+    ],
+    "cardsAway": [
+      { "player": "Jordan Bos", "minute": "16'", "type": "yellow" },
+      { "player": "Alessandro Circati", "minute": "32'", "type": "yellow" },
+      { "player": "Harry Souttar", "minute": "88'", "type": "yellow" },
+      { "player": "Jacob Italiano", "minute": "89'", "type": "yellow" }
     ]
   }
 ]
