@@ -1,57 +1,57 @@
 [
   {
-    "id": "C3",
-    "scoreHome": 3,
-    "scoreAway": 0,
-    "goalsHome": [
-      { "player": "Matheus Cunha", "minute": "23'" },
-      { "player": "Matheus Cunha", "minute": "36'" },
-      { "player": "Vinícius Júnior", "minute": "45+3'" }
-    ],
-    "goalsAway": [],
-    "cardsHome": [
-      { "player": "Douglas Santos", "minute": "65'", "type": "yellow" }
-    ],
-    "cardsAway": [
-      { "player": "Danley Jean Jacques", "minute": "3'", "type": "yellow" },
-      { "player": "Carlens Arcus", "minute": "4'", "type": "yellow" },
-      { "player": "Frantzdy Pierrot", "minute": "45+4'", "type": "yellow" }
-    ]
-  },
-  {
-    "id": "C4",
+    "id": "D4",
     "scoreHome": 0,
     "scoreAway": 1,
     "goalsHome": [],
     "goalsAway": [
-      { "player": "Ismael Saibari", "minute": "2'" }
+      { "player": "Matías Galarza", "minute": "2'" }
     ],
-    "cardsHome": [
-      { "player": "Andy Robertson", "minute": "65'", "type": "yellow" }
-    ],
+    "cardsHome": [],
     "cardsAway": [
-      { "player": "Issa Diop", "minute": "23'", "type": "yellow" }
+      { "player": "Miguel Almirón", "minute": "45+3'", "type": "red" }
     ]
   },
   {
-    "id": "D3",
+    "id": "E3",
     "scoreHome": 2,
-    "scoreAway": 0,
+    "scoreAway": 1,
     "goalsHome": [
-      { "player": "Cameron Burgess (g.c.)", "minute": "11'" },
-      { "player": "Alex Freeman", "minute": "43'" }
+      { "player": "Deniz Undav", "minute": "68'" },
+      { "player": "Deniz Undav", "minute": "90+4'" }
     ],
+    "goalsAway": [
+      { "player": "Franck Kessié", "minute": "30'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "E4",
+    "scoreHome": 0,
+    "scoreAway": 0,
+    "goalsHome": [],
     "goalsAway": [],
-    "cardsHome": [
-      { "player": "Antonee Robinson", "minute": "56'", "type": "yellow" },
-      { "player": "Folarin Balogun", "minute": "89'", "type": "yellow" },
-      { "player": "Chris Richards", "minute": "90+3'", "type": "yellow" }
-    ],
+    "cardsHome": [],
     "cardsAway": [
-      { "player": "Jordan Bos", "minute": "16'", "type": "yellow" },
-      { "player": "Alessandro Circati", "minute": "32'", "type": "yellow" },
-      { "player": "Harry Souttar", "minute": "88'", "type": "yellow" },
-      { "player": "Jacob Italiano", "minute": "89'", "type": "yellow" }
+      { "player": "Gervane Kastaneer", "minute": "91'", "type": "yellow" }
     ]
+  },
+  {
+    "id": "F3",
+    "scoreHome": 5,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Brian Brobbey", "minute": "5'" },
+      { "player": "Brian Brobbey", "minute": "17'" },
+      { "player": "Cody Gakpo", "minute": "47'" },
+      { "player": "Cody Gakpo", "minute": "54'" },
+      { "player": "Crysencio Summerville", "minute": "89'" }
+    ],
+    "goalsAway": [
+      { "player": "Anthony Elanga", "minute": "59'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
   }
 ]
