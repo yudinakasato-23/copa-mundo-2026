@@ -1,55 +1,324 @@
 [
   {
-    "id": "D4",
+    "id": "F4",
     "scoreHome": 0,
-    "scoreAway": 1,
+    "scoreAway": 2,
     "goalsHome": [],
     "goalsAway": [
-      { "player": "Matías Galarza", "minute": "2'" }
-    ],
-    "cardsHome": [],
-    "cardsAway": [
-      { "player": "Miguel Almirón", "minute": "45+3'", "type": "red" }
-    ]
-  },
-  {
-    "id": "E3",
-    "scoreHome": 2,
-    "scoreAway": 1,
-    "goalsHome": [
-      { "player": "Deniz Undav", "minute": "68'" },
-      { "player": "Deniz Undav", "minute": "90+4'" }
-    ],
-    "goalsAway": [
-      { "player": "Franck Kessié", "minute": "30'" }
+      { "player": "Kaoru Mitoma", "minute": "12'" },
+      { "player": "Takefusa Kubo", "minute": "78'" }
     ],
     "cardsHome": [],
     "cardsAway": []
   },
   {
-    "id": "E4",
-    "scoreHome": 0,
+    "id": "G3",
+    "scoreHome": 3,
     "scoreAway": 0,
-    "goalsHome": [],
+    "goalsHome": [
+      { "player": "Romelu Lukaku", "minute": "15'" },
+      { "player": "Kevin De Bruyne", "minute": "30'" },
+      { "player": "Leandro Trossard", "minute": "45'" }
+    ],
     "goalsAway": [],
     "cardsHome": [],
-    "cardsAway": [
-      { "player": "Gervane Kastaneer", "minute": "91'", "type": "yellow" }
-    ]
+    "cardsAway": []
   },
   {
-    "id": "F3",
-    "scoreHome": 5,
+    "id": "G4",
+    "scoreHome": 1,
     "scoreAway": 1,
     "goalsHome": [
-      { "player": "Brian Brobbey", "minute": "5'" },
-      { "player": "Brian Brobbey", "minute": "17'" },
-      { "player": "Cody Gakpo", "minute": "47'" },
-      { "player": "Cody Gakpo", "minute": "54'" },
-      { "player": "Crysencio Summerville", "minute": "89'" }
+      { "player": "Chris Wood", "minute": "15'" }
     ],
     "goalsAway": [
-      { "player": "Anthony Elanga", "minute": "59'" }
+      { "player": "Mohamed Salah", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "H3",
+    "scoreHome": 4,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Alvaro Morata", "minute": "15'" },
+      { "player": "Pedri", "minute": "30'" },
+      { "player": "Lamine Yamal", "minute": "45'" },
+      { "player": "Ferran Torres", "minute": "60'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "H4",
+    "scoreHome": 2,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Darwin Nunez", "minute": "15'" },
+      { "player": "Federico Valverde", "minute": "30'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "I6",
+    "scoreHome": 1,
+    "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Sadio Mane", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Erling Haaland", "minute": "12'" },
+      { "player": "Martin Odegaard", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "J4",
+    "scoreHome": 0,
+    "scoreAway": 2,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Riyad Mahrez", "minute": "12'" },
+      { "player": "Islam Slimani", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "J3",
+    "scoreHome": 2,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Lionel Messi", "minute": "15'" },
+      { "player": "Julian Alvarez", "minute": "30'" }
+    ],
+    "goalsAway": [
+      { "player": "Marcel Sabitzer", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "I5",
+    "scoreHome": 0,
+    "scoreAway": 4,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Kylian Mbappe", "minute": "12'" },
+      { "player": "Kylian Mbappe", "minute": "24'" },
+      { "player": "Antoine Griezmann", "minute": "36'" },
+      { "player": "Olivier Giroud", "minute": "48'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "L5",
+    "scoreHome": 1,
+    "scoreAway": 3,
+    "goalsHome": [
+      { "player": "Mohammed Kudus", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Harry Kane", "minute": "12'" },
+      { "player": "Jude Bellingham", "minute": "24'" },
+      { "player": "Bukayo Saka", "minute": "36'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "L6",
+    "scoreHome": 2,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Andrej Kramaric", "minute": "15'" },
+      { "player": "Luka Modric", "minute": "30'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "K3",
+    "scoreHome": 3,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Cristiano Ronaldo", "minute": "15'" },
+      { "player": "Bruno Fernandes", "minute": "30'" },
+      { "player": "Bernardo Silva", "minute": "45'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "K4",
+    "scoreHome": 2,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Luis Diaz", "minute": "15'" },
+      { "player": "James Rodriguez", "minute": "30'" }
+    ],
+    "goalsAway": [
+      { "player": "Cedric Bakambu", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "A5",
+    "scoreHome": 1,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Tomas Soucek", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Santiago Gimenez", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "A6",
+    "scoreHome": 0,
+    "scoreAway": 2,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Son Heung-min", "minute": "12'" },
+      { "player": "Hwang Hee-chan", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "B5",
+    "scoreHome": 2,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Breel Embolo", "minute": "15'" },
+      { "player": "Granit Xhaka", "minute": "30'" }
+    ],
+    "goalsAway": [
+      { "player": "Alphonso Davies", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "B6",
+    "scoreHome": 1,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Edin Dzeko", "minute": "15'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "C5",
+    "scoreHome": 0,
+    "scoreAway": 3,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Vinicius Junior", "minute": "12'" },
+      { "player": "Rodrygo", "minute": "24'" },
+      { "player": "Richarlison", "minute": "36'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "C6",
+    "scoreHome": 2,
+    "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Hakim Ziyech", "minute": "15'" },
+      { "player": "Youssef En-Nesyri", "minute": "30'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "E5",
+    "scoreHome": 1,
+    "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Enner Valencia", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Jamal Musiala", "minute": "12'" },
+      { "player": "Florian Wirtz", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "E6",
+    "scoreHome": 0,
+    "scoreAway": 3,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Sebastien Haller", "minute": "12'" },
+      { "player": "Franck Kessie", "minute": "24'" },
+      { "player": "Nicolas Pepe", "minute": "36'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "F5",
+    "scoreHome": 0,
+    "scoreAway": 2,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Cody Gakpo", "minute": "12'" },
+      { "player": "Memphis Depay", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "F6",
+    "scoreHome": 1,
+    "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Takumi Minamino", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Alexander Isak", "minute": "12'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "D5",
+    "scoreHome": 1,
+    "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Hakan Calhanoglu", "minute": "15'" }
+    ],
+    "goalsAway": [
+      { "player": "Christian Pulisic", "minute": "12'" },
+      { "player": "Folarin Balogun", "minute": "24'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "D6",
+    "scoreHome": 0,
+    "scoreAway": 1,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Mitchell Duke", "minute": "12'" }
     ],
     "cardsHome": [],
     "cardsAway": []
