@@ -2718,11 +2718,15 @@ export default function App() {
 
         {/* Table of Standings */}
         <div className="space-y-2">
-          <p className="text-xs md:text-sm font-bold text-slate-450 uppercase tracking-wider pl-1 flex items-center justify-between">
-            <span>Classificação</span>
-            <span className="text-[10px] md:text-xs text-slate-500 font-medium normal-case font-mono">
+          <div className="flex items-center justify-between pl-1">
+            <p className="text-xs md:text-sm font-bold text-slate-450 uppercase tracking-wider">Classificação</p>
+            <span className="text-[10px] md:text-xs text-slate-500 font-medium normal-case font-mono hidden sm:inline">
               (Clique na seleção para ver escalação/estrelas)
             </span>
+          </div>
+          <p className="lg:hidden text-[10px] text-slate-500 font-medium pl-1 flex items-center gap-1 animate-pulse">
+            <ChevronRight className="w-3 h-3 text-emerald-400/80 shrink-0" />
+            <span>Deslize a tabela para ver <span className="text-slate-400 font-mono">V · E · D · GP · GC · SG</span></span>
           </p>
           
           <div 
@@ -2864,13 +2868,13 @@ export default function App() {
                   </div>
                   
                   {/* Scoreline */}
-                  <div className="flex justify-between items-center gap-3 py-1.5">
-                    <div className="flex items-center gap-2 max-w-[42%] truncate">
-                      <TeamFlag teamId={match.home} />
+                  <div className="flex justify-between items-center gap-2 py-1.5">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <TeamFlag teamId={match.home} className="w-5 h-3.5 object-cover rounded shadow-xs shrink-0" />
                       <span className="font-bold text-sm md:text-base text-slate-100 truncate">{homeTeam.name}</span>
                     </div>
-                    
-                    <div className="flex items-center gap-1 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-950">
+
+                    <div className="flex items-center gap-1 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-950 shrink-0">
                       {showResults ? (
                         <>
                           <span className="font-mono font-bold text-sm md:text-base text-slate-100">{match.scoreHome}</span>
@@ -2882,9 +2886,9 @@ export default function App() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 max-w-[42%] truncate justify-end font-sans">
+                    <div className="flex items-center gap-2 flex-1 min-w-0 justify-end font-sans">
                       <span className="font-bold text-sm md:text-base text-slate-100 truncate">{awayTeam.name}</span>
-                      <TeamFlag teamId={match.away} />
+                      <TeamFlag teamId={match.away} className="w-5 h-3.5 object-cover rounded shadow-xs shrink-0" />
                     </div>
                   </div>
 
@@ -3017,16 +3021,16 @@ export default function App() {
   return (
     <div className="min-h-screen pb-24 lg:pb-8 flex flex-col transition-native">
       {/* Premium Dark Header banner */}
-      <header className="relative overflow-hidden bg-radial from-emerald-950/45 to-slate-950 border-b border-emerald-500/15 py-6 px-4 md:px-8 shadow-2xl">
+      <header className="relative overflow-hidden bg-radial from-emerald-950/45 to-slate-950 border-b border-emerald-500/15 py-4 px-4 md:py-6 md:px-8 shadow-2xl">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="p-3.5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl shadow-xl shadow-amber-500/10 border border-amber-300/20">
-              <Trophy className="w-8 h-8 text-slate-950" />
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 relative z-10">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2.5 md:p-3.5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl shadow-xl shadow-amber-500/10 border border-amber-300/20 shrink-0">
+              <Trophy className="w-6 h-6 md:w-8 md:h-8 text-slate-950" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-yellow-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent">
+                <h1 className="text-xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-yellow-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
                   COPA DO MUNDO 2026
                 </h1>
               </div>
@@ -3088,10 +3092,10 @@ export default function App() {
       </header>
 
       {/* Metrics Row */}
-      <section className="bg-slate-950/20 border-b border-slate-900/50 py-3.5 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+      <section className="bg-slate-950/20 border-b border-slate-900/50 py-3 px-4 md:py-3.5 md:px-8">
+        <div className="max-w-7xl mx-auto flex md:grid md:grid-cols-4 gap-3 md:gap-4 overflow-x-auto no-scrollbar snap-x -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="shrink-0 min-w-[44%] md:min-w-0 snap-start bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
@@ -3099,8 +3103,8 @@ export default function App() {
               <p className="text-base font-bold text-slate-100 font-mono">{stats.totalGoals}</p>
             </div>
           </div>
-          <div className="bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+          <div className="shrink-0 min-w-[44%] md:min-w-0 snap-start bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
+            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400 shrink-0">
               <BarChart2 className="w-4 h-4" />
             </div>
             <div>
@@ -3108,8 +3112,8 @@ export default function App() {
               <p className="text-base font-bold text-slate-100 font-mono">{stats.averageGoals}</p>
             </div>
           </div>
-          <div className="bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+          <div className="shrink-0 min-w-[44%] md:min-w-0 snap-start bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400 shrink-0">
               <Award className="w-4 h-4" />
             </div>
             <div className="truncate">
@@ -3125,8 +3129,8 @@ export default function App() {
               </p>
             </div>
           </div>
-          <div className="bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
-            <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-400">
+          <div className="shrink-0 min-w-[44%] md:min-w-0 snap-start bg-slate-900/30 border border-slate-900 p-3 rounded-xl flex items-center gap-3">
+            <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-400 shrink-0">
               <Trophy className="w-4 h-4" />
             </div>
             <div className="truncate">
@@ -3259,8 +3263,8 @@ export default function App() {
                   <Info className="w-5 h-5 text-emerald-400" /> Classificação & Jogos
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Selecione um grupo. Toque em qualquer jogo para ver detalhes e editar. 
-                  No celular, você pode **deslizar para o lado (swipe)** nos jogos para mudar de grupo.
+                  Selecione um grupo. Toque em qualquer jogo para ver detalhes e editar.
+                  No celular, você pode <strong className="text-emerald-400 font-bold">deslizar para o lado (swipe)</strong> nos jogos para mudar de grupo.
                 </p>
               </div>
               
