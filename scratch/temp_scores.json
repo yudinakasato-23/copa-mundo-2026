@@ -1,78 +1,300 @@
 [
   {
-    "id": "H5",
-    "scoreHome": 0,
-    "scoreAway": 1,
+    "id": "A5", "scoreHome": 0, "scoreAway": 3,
     "goalsHome": [],
     "goalsAway": [
-      { "player": "Álex Baena", "minute": "42'" }
+      { "player": "Mateo Chávez", "minute": "55'" },
+      { "player": "Julián Quiñones", "minute": "61'" },
+      { "player": "Álvaro Fidalgo", "minute": "90+4'" }
     ],
+    "cardsHome": [],
+    "cardsAway": [ { "player": "Edson Álvarez", "minute": "64'", "type": "yellow" } ]
+  },
+  {
+    "id": "A6", "scoreHome": 1, "scoreAway": 0,
+    "goalsHome": [ { "player": "Thapelo Maseko", "minute": "63'" } ],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Aubrey Modiba", "minute": "72'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Cho Gue-sung", "minute": "78'", "type": "yellow" } ]
+  },
+  {
+    "id": "B2", "scoreHome": 1, "scoreAway": 1,
+    "goalsHome": [ { "player": "Miro Muheim (g.c.)", "minute": "90+4'" } ],
+    "goalsAway": [ { "player": "Breel Embolo (pen.)", "minute": "17'" } ],
     "cardsHome": [
-      { "player": "Juan Manuel Sanabria", "minute": "54'", "type": "yellow" },
-      { "player": "Guillermo Varela", "minute": "58'", "type": "yellow" },
-      { "player": "Nicolás de la Cruz", "minute": "90+3'", "type": "yellow" },
-      { "player": "Agustín Canobbio", "minute": "90+4'", "type": "red" }
+      { "player": "Mahmud Abunada", "minute": "14'", "type": "yellow" },
+      { "player": "Jassem Gaber", "minute": "23'", "type": "yellow" }
     ],
+    "cardsAway": [ { "player": "Denis Zakaria", "minute": "42'", "type": "yellow" } ]
+  },
+  {
+    "id": "B5", "scoreHome": 2, "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Rubén Vargas", "minute": "46'" },
+      { "player": "Johan Manzambi", "minute": "57'" }
+    ],
+    "goalsAway": [ { "player": "Promise David", "minute": "76'" } ],
+    "cardsHome": [],
     "cardsAway": [
-      { "player": "Álex Baena", "minute": "46'", "type": "yellow" }
+      { "player": "Cyle Larin", "minute": "32'", "type": "yellow" },
+      { "player": "Liam Millar", "minute": "87'", "type": "yellow" }
     ]
   },
   {
-    "id": "H6",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "id": "B6", "scoreHome": 3, "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Kerim Alajbegović", "minute": "29'" },
+      { "player": "Mahmud Abunada (g.c.)", "minute": "34'" },
+      { "player": "Ermin Mahmić", "minute": "80'" }
+    ],
+    "goalsAway": [ { "player": "Hassan Al-Haydos", "minute": "42'" } ],
+    "cardsHome": [ { "player": "Ermin Mahmić", "minute": "82'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Ahmed Fathy", "minute": "78'", "type": "yellow" } ]
+  },
+  {
+    "id": "C5", "scoreHome": 0, "scoreAway": 3,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Vinícius Júnior", "minute": "7'" },
+      { "player": "Vinícius Júnior", "minute": "45+3'" },
+      { "player": "Matheus Cunha", "minute": "60'" }
+    ],
+    "cardsHome": [ { "player": "Ryan Christie", "minute": "89'", "type": "yellow" } ],
+    "cardsAway": [
+      { "player": "Danilo", "minute": "62'", "type": "yellow" },
+      { "player": "Fabinho", "minute": "82'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "C6", "scoreHome": 4, "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Achraf Hakimi", "minute": "39'" },
+      { "player": "Ismael Saibari", "minute": "45+1'" },
+      { "player": "Soufiane Rahimi", "minute": "78'" },
+      { "player": "Gessime Yassine", "minute": "89'" }
+    ],
+    "goalsAway": [
+      { "player": "Yassine Bounou (g.c.)", "minute": "10'" },
+      { "player": "Wilson Isidor", "minute": "43'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": [
+      { "player": "Johny Placide", "minute": "79'", "type": "yellow" },
+      { "player": "Duckens Nazon", "minute": "80'", "type": "yellow" },
+      { "player": "Josué Casimir", "minute": "90+3'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "D5", "scoreHome": 3, "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Arda Güler", "minute": "10'" },
+      { "player": "Barış Alper Yılmaz", "minute": "31'" },
+      { "player": "Kaan Ayhan", "minute": "90+8'" }
+    ],
+    "goalsAway": [
+      { "player": "Auston Trusty", "minute": "3'" },
+      { "player": "Sebastian Berhalter", "minute": "49'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": [ { "player": "Sebastian Berhalter", "minute": "19'", "type": "yellow" } ]
+  },
+  {
+    "id": "D6", "scoreHome": 0, "scoreAway": 0,
+    "goalsHome": [],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Diego Gómez", "minute": "77'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Jackson Irvine", "minute": "46'", "type": "yellow" } ]
+  },
+  {
+    "id": "E5", "scoreHome": 2, "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Nilson Angulo", "minute": "9'" },
+      { "player": "Gonzalo Plata", "minute": "77'" }
+    ],
+    "goalsAway": [ { "player": "Leroy Sané", "minute": "2'" } ],
+    "cardsHome": [
+      { "player": "Piero Hincapié", "minute": "43'", "type": "yellow" },
+      { "player": "Alan Franco", "minute": "50'", "type": "yellow" },
+      { "player": "Gonzalo Plata", "minute": "89'", "type": "yellow" }
+    ],
+    "cardsAway": [ { "player": "Aleksandar Pavlović", "minute": "44'", "type": "yellow" } ]
+  },
+  {
+    "id": "E6", "scoreHome": 0, "scoreAway": 2,
+    "goalsHome": [],
+    "goalsAway": [
+      { "player": "Nicolas Pépé", "minute": "7'" },
+      { "player": "Nicolas Pépé", "minute": "64'" }
+    ],
+    "cardsHome": [
+      { "player": "Juninho Bacuna", "minute": "75'", "type": "yellow" },
+      { "player": "Gervane Kastaneer", "minute": "83'", "type": "yellow" }
+    ],
+    "cardsAway": [ { "player": "Nicolas Pépé", "minute": "34'", "type": "yellow" } ]
+  },
+  {
+    "id": "F5", "scoreHome": 1, "scoreAway": 3,
+    "goalsHome": [ { "player": "Hazem Mastouri", "minute": "54'" } ],
+    "goalsAway": [
+      { "player": "Ellyes Skhiri (g.c.)", "minute": "3'" },
+      { "player": "Brian Brobbey", "minute": "7'" },
+      { "player": "Jan Paul van Hecke", "minute": "62'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "F6", "scoreHome": 1, "scoreAway": 1,
+    "goalsHome": [ { "player": "Daizen Maeda", "minute": "56'" } ],
+    "goalsAway": [ { "player": "Anthony Elanga", "minute": "62'" } ],
+    "cardsHome": [ { "player": "Shōgo Taniguchi", "minute": "77'", "type": "yellow" } ],
+    "cardsAway": [
+      { "player": "Isak Hien", "minute": "32'", "type": "yellow" },
+      { "player": "Lucas Bergvall", "minute": "80'", "type": "yellow" },
+      { "player": "Viktor Gyökeres", "minute": "84'", "type": "yellow" }
+    ]
+  },
+  {
+    "id": "G3", "scoreHome": 0, "scoreAway": 0,
     "goalsHome": [],
     "goalsAway": [],
     "cardsHome": [
-      { "player": "Wagner Pina", "minute": "8'", "type": "yellow" },
-      { "player": "Diney", "minute": "90+3'", "type": "yellow" }
+      { "player": "Romelu Lukaku", "minute": "3'", "type": "yellow" },
+      { "player": "Nathan Ngoy", "minute": "66'", "type": "red" }
     ],
-    "cardsAway": [
-      { "player": "Saud Abdulhamid", "minute": "4'", "type": "yellow" },
-      { "player": "Nasser Al-Dawsari", "minute": "67'", "type": "yellow" },
-      { "player": "Firas Al-Buraikan", "minute": "90+3'", "type": "yellow" }
-    ]
+    "cardsAway": [ { "player": "Saeid Ezatolahi", "minute": "33'", "type": "yellow" } ]
   },
   {
-    "id": "I3",
-    "scoreHome": 4,
-    "scoreAway": 1,
-    "goalsHome": [
-      { "player": "Ousmane Dembélé", "minute": "7'" },
-      { "player": "Ousmane Dembélé", "minute": "20'" },
-      { "player": "Ousmane Dembélé", "minute": "32'" },
-      { "player": "Désiré Doué", "minute": "90+4'" }
-    ],
+    "id": "G4", "scoreHome": 1, "scoreAway": 3,
+    "goalsHome": [ { "player": "Finn Surman", "minute": "15'" } ],
     "goalsAway": [
-      { "player": "Thelo Aasgaard", "minute": "21'" }
+      { "player": "Mostafa Mohamed", "minute": "58'" },
+      { "player": "Mohamed Salah", "minute": "67'" },
+      { "player": "Trézéguet", "minute": "82'" }
     ],
     "cardsHome": [
-      { "player": "Aurélien Tchouaméni", "minute": "74'", "type": "yellow" }
+      { "player": "Sarpreet Singh", "minute": "20'", "type": "yellow" },
+      { "player": "Callum McCowatt", "minute": "34'", "type": "yellow" }
     ],
+    "cardsAway": [ { "player": "Mohanad Lasheen", "minute": "17'", "type": "yellow" } ]
+  },
+  {
+    "id": "H3", "scoreHome": 4, "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Lamine Yamal", "minute": "10'" },
+      { "player": "Mikel Oyarzabal", "minute": "21'" },
+      { "player": "Mikel Oyarzabal", "minute": "24'" },
+      { "player": "Hassan Al-Tambakti (g.c.)", "minute": "49'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Pedri", "minute": "90+3'", "type": "yellow" } ],
     "cardsAway": [
-      { "player": "Patrick Berg", "minute": "10'", "type": "yellow" }
+      { "player": "Salem Al-Dawsari", "minute": "30'", "type": "yellow" },
+      { "player": "Mohamed Kanno", "minute": "60'", "type": "yellow" }
     ]
   },
   {
-    "id": "I4",
-    "scoreHome": 0,
-    "scoreAway": 5,
+    "id": "H4", "scoreHome": 2, "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Maximiliano Araújo", "minute": "44'" },
+      { "player": "Agustín Canobbio", "minute": "45+6'" }
+    ],
+    "goalsAway": [
+      { "player": "Kevin Pina", "minute": "21'" },
+      { "player": "Hélio Varela", "minute": "61'" }
+    ],
+    "cardsHome": [
+      { "player": "Rodrigo Bentancur", "minute": "20'", "type": "yellow" },
+      { "player": "Mathías Olivera", "minute": "58'", "type": "yellow" }
+    ],
+    "cardsAway": [ { "player": "Sidny Lopes Cabral", "minute": "5'", "type": "yellow" } ]
+  },
+  {
+    "id": "I5", "scoreHome": 0, "scoreAway": 3,
     "goalsHome": [],
     "goalsAway": [
-      { "player": "Habib Diarra", "minute": "4'" },
-      { "player": "Ismaïla Sarr", "minute": "56'" },
-      { "player": "Pape Gueye", "minute": "59'" },
-      { "player": "Pape Gueye", "minute": "71'" },
-      { "player": "Iliman Ndiaye", "minute": "82'" }
+      { "player": "Kylian Mbappé", "minute": "14'" },
+      { "player": "Kylian Mbappé", "minute": "54'" },
+      { "player": "Ousmane Dembélé", "minute": "66'" }
     ],
+    "cardsHome": [ { "player": "Amir Al-Ammari", "minute": "6'", "type": "yellow" } ],
+    "cardsAway": []
+  },
+  {
+    "id": "I6", "scoreHome": 2, "scoreAway": 3,
+    "goalsHome": [
+      { "player": "Ismaïla Sarr", "minute": "53'" },
+      { "player": "Ismaïla Sarr", "minute": "90+3'" }
+    ],
+    "goalsAway": [
+      { "player": "Marcus Holmgren Pedersen", "minute": "43'" },
+      { "player": "Erling Haaland", "minute": "48'" },
+      { "player": "Erling Haaland", "minute": "58'" }
+    ],
+    "cardsHome": [],
+    "cardsAway": []
+  },
+  {
+    "id": "J3", "scoreHome": 2, "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Lionel Messi", "minute": "38'" },
+      { "player": "Lionel Messi", "minute": "90+5'" }
+    ],
+    "goalsAway": [],
     "cardsHome": [
-      { "player": "Rebin Sulaka", "minute": "13'", "type": "red" },
-      { "player": "Amir Al-Ammari", "minute": "75'", "type": "yellow" },
-      { "player": "Merchas Doski", "minute": "90'", "type": "yellow" }
+      { "player": "Facundo Medina", "minute": "76'", "type": "yellow" },
+      { "player": "Leandro Paredes", "minute": "90+2'", "type": "yellow" }
     ],
     "cardsAway": [
-      { "player": "Abdoulaye Seck", "minute": "18'", "type": "yellow" },
-      { "player": "Pape Gueye", "minute": "81'", "type": "yellow" }
+      { "player": "Stefan Posch", "minute": "41'", "type": "yellow" },
+      { "player": "Konrad Laimer", "minute": "76'", "type": "yellow" }
     ]
+  },
+  {
+    "id": "J4", "scoreHome": 1, "scoreAway": 2,
+    "goalsHome": [ { "player": "Nizar Al-Rashdan", "minute": "36'" } ],
+    "goalsAway": [
+      { "player": "Nadhir Benbouali", "minute": "69'" },
+      { "player": "Amine Gouiri", "minute": "82'" }
+    ],
+    "cardsHome": [ { "player": "Husam Abu Dahab", "minute": "64'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Ramiz Zerrouki", "minute": "44'", "type": "yellow" } ]
+  },
+  {
+    "id": "K3", "scoreHome": 5, "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Cristiano Ronaldo", "minute": "6'" },
+      { "player": "Nuno Mendes", "minute": "17'" },
+      { "player": "Cristiano Ronaldo", "minute": "39'" },
+      { "player": "Abduvohid Nematov (g.c.)", "minute": "60'" },
+      { "player": "Rafael Leão", "minute": "87'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Renato Veiga", "minute": "68'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Odiljon Hamrobekov", "minute": "14'", "type": "yellow" } ]
+  },
+  {
+    "id": "K4", "scoreHome": 1, "scoreAway": 0,
+    "goalsHome": [ { "player": "Daniel Muñoz", "minute": "76'" } ],
+    "goalsAway": [],
+    "cardsHome": [
+      { "player": "Jhon Lucumí", "minute": "56'", "type": "yellow" },
+      { "player": "Jefferson Lerma", "minute": "90+4'", "type": "yellow" }
+    ],
+    "cardsAway": [ { "player": "Charles Pickel", "minute": "90+3'", "type": "yellow" } ]
+  },
+  {
+    "id": "L5", "scoreHome": 0, "scoreAway": 0,
+    "goalsHome": [],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Iñaki Williams", "minute": "60'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Declan Rice", "minute": "41'", "type": "yellow" } ]
+  },
+  {
+    "id": "L6", "scoreHome": 1, "scoreAway": 0,
+    "goalsHome": [ { "player": "Ante Budimir", "minute": "54'" } ],
+    "goalsAway": [],
+    "cardsHome": [ { "player": "Petar Sučić", "minute": "90+2'", "type": "yellow" } ],
+    "cardsAway": [ { "player": "Yoel Bárcenas", "minute": "61'", "type": "yellow" } ]
   }
 ]
