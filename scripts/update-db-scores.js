@@ -161,25 +161,30 @@ function triggerKnockoutPropagation(matches) {
   }).slice(0, 8);
 
   const getTeam = (list, key) => list.find(t => t.group === key)?.id || "";
-  const getThirdByRank = (rank) => bestEightThirds[rank - 1]?.id || "";
+  // Returns the 3rd-place team from group g only if they qualified as one of the 8 best thirds
+  const getThirdFromGroup = (g) => {
+    const inBestEight = bestEightThirds.some(b => b.group === g);
+    return inBestEight ? (thirds.find(t => t.group === g)?.id || "") : "";
+  };
 
+  // Pairings reflect the official FIFA 2026 bracket structure
   const r32Pairings = [
-    { home: getTeam(firsts, "A"), away: getThirdByRank(1) },
-    { home: getTeam(seconds, "B"), away: getTeam(seconds, "C") },
-    { home: getTeam(firsts, "C"), away: getThirdByRank(2) },
-    { home: getTeam(seconds, "D"), away: getTeam(seconds, "E") },
-    { home: getTeam(firsts, "E"), away: getThirdByRank(3) },
-    { home: getTeam(seconds, "F"), away: getTeam(seconds, "G") },
-    { home: getTeam(firsts, "G"), away: getThirdByRank(4) },
-    { home: getTeam(seconds, "H"), away: getTeam(seconds, "I") },
-    { home: getTeam(firsts, "I"), away: getThirdByRank(5) },
-    { home: getTeam(seconds, "J"), away: getTeam(seconds, "K") },
-    { home: getTeam(firsts, "K"), away: getThirdByRank(6) },
-    { home: getTeam(seconds, "L"), away: getTeam(seconds, "A") },
-    { home: getTeam(firsts, "B"), away: getThirdByRank(7) },
-    { home: getTeam(firsts, "D"), away: getThirdByRank(8) },
-    { home: getTeam(firsts, "F"), away: getTeam(firsts, "H") },
-    { home: getTeam(firsts, "J"), away: getTeam(firsts, "L") }
+    { home: getTeam(firsts,  "E"), away: getThirdFromGroup("D") }, // R32-1:  1E vs 3D  (GER vs PAR)
+    { home: getTeam(firsts,  "I"), away: getThirdFromGroup("F") }, // R32-2:  1I vs 3F  (FRA vs SWE)
+    { home: getTeam(seconds, "A"), away: getTeam(seconds, "B") }, // R32-3:  2A vs 2B  (RSA vs CAN)
+    { home: getTeam(firsts,  "F"), away: getTeam(seconds, "C") }, // R32-4:  1F vs 2C  (NED vs MAR)
+    { home: getTeam(firsts,  "C"), away: getTeam(seconds, "F") }, // R32-5:  1C vs 2F  (BRA vs JPN)
+    { home: getTeam(seconds, "E"), away: getTeam(seconds, "I") }, // R32-6:  2E vs 2I  (CIV vs NOR)
+    { home: getTeam(firsts,  "A"), away: getThirdFromGroup("E") }, // R32-7:  1A vs 3E  (MEX vs ECU)
+    { home: getTeam(firsts,  "L"), away: getThirdFromGroup("K") }, // R32-8:  1L vs 3K  (ENG vs COD)
+    { home: getTeam(firsts,  "K"), away: getTeam(seconds, "L") }, // R32-9:  1K vs 2L  (COL vs CRO)
+    { home: getTeam(firsts,  "H"), away: getTeam(seconds, "J") }, // R32-10: 1H vs 2J  (ESP vs AUT)
+    { home: getTeam(firsts,  "B"), away: getThirdFromGroup("J") }, // R32-11: 1B vs 3J  (SUI vs ALG)
+    { home: getTeam(seconds, "K"), away: getThirdFromGroup("L") }, // R32-12: 2K vs 3L  (POR vs GHA)
+    { home: getTeam(firsts,  "J"), away: getTeam(seconds, "H") }, // R32-13: 1J vs 2H  (ARG vs CPV)
+    { home: getTeam(seconds, "D"), away: getTeam(seconds, "G") }, // R32-14: 2D vs 2G  (AUS vs EGY)
+    { home: getTeam(firsts,  "D"), away: getThirdFromGroup("B") }, // R32-15: 1D vs 3B  (USA vs BIH)
+    { home: getTeam(firsts,  "G"), away: getThirdFromGroup("I") }, // R32-16: 1G vs 3I  (BEL vs SEN)
   ];
 
   const knockoutUpdates = [];
