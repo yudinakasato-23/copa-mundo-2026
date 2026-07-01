@@ -1807,36 +1807,37 @@ export default function App() {
 
   // Handle R32 bracket generation when group matches update
   useEffect(() => {
-    const { firsts, seconds, bestEightThirds } = qualificationData;
+    const { firsts, seconds, thirds, bestEightThirds } = qualificationData;
 
     const getTeam = (list, key) => {
       const item = list.find(t => t.group === key);
       return item ? item.id : null;
     };
 
-    const getThirdByRank = (rank) => {
-      const team = bestEightThirds[rank - 1];
-      return team ? team.id : null;
+    const getThirdFromGroup = (g) => {
+      const inBest8 = bestEightThirds.some(b => b.group === g);
+      const t = thirds.find(x => x.group === g);
+      return (inBest8 && t) ? t.id : null;
     };
 
-    // Symmetric 32-team bracket pairing
+    // Official FIFA 2026 bracket structure
     const r32Teams = [
-      { home: getTeam(firsts, "A"), away: getThirdByRank(1) }, // R32-1
-      { home: getTeam(seconds, "B"), away: getTeam(seconds, "C") }, // R32-2
-      { home: getTeam(firsts, "C"), away: getThirdByRank(2) }, // R32-3
-      { home: getTeam(seconds, "D"), away: getTeam(seconds, "E") }, // R32-4
-      { home: getTeam(firsts, "E"), away: getThirdByRank(3) }, // R32-5
-      { home: getTeam(seconds, "F"), away: getTeam(seconds, "G") }, // R32-6
-      { home: getTeam(firsts, "G"), away: getThirdByRank(4) }, // R32-7
-      { home: getTeam(seconds, "H"), away: getTeam(seconds, "I") }, // R32-8
-      { home: getTeam(firsts, "I"), away: getThirdByRank(5) }, // R32-9
-      { home: getTeam(seconds, "J"), away: getTeam(seconds, "K") }, // R32-10
-      { home: getTeam(firsts, "K"), away: getThirdByRank(6) }, // R32-11
-      { home: getTeam(seconds, "L"), away: getTeam(seconds, "A") }, // R32-12
-      { home: getTeam(firsts, "B"), away: getThirdByRank(7) }, // R32-13
-      { home: getTeam(firsts, "D"), away: getThirdByRank(8) }, // R32-14
-      { home: getTeam(firsts, "F"), away: getTeam(firsts, "H") }, // R32-15
-      { home: getTeam(firsts, "J"), away: getTeam(firsts, "L") }  // R32-16
+      { home: getTeam(firsts,  "E"), away: getThirdFromGroup("D") }, // R32-1:  1E vs 3D
+      { home: getTeam(firsts,  "I"), away: getThirdFromGroup("F") }, // R32-2:  1I vs 3F
+      { home: getTeam(seconds, "A"), away: getTeam(seconds, "B") }, // R32-3:  2A vs 2B
+      { home: getTeam(firsts,  "F"), away: getTeam(seconds, "C") }, // R32-4:  1F vs 2C
+      { home: getTeam(firsts,  "C"), away: getTeam(seconds, "F") }, // R32-5:  1C vs 2F
+      { home: getTeam(seconds, "E"), away: getTeam(seconds, "I") }, // R32-6:  2E vs 2I
+      { home: getTeam(firsts,  "A"), away: getThirdFromGroup("E") }, // R32-7:  1A vs 3E
+      { home: getTeam(firsts,  "L"), away: getThirdFromGroup("K") }, // R32-8:  1L vs 3K
+      { home: getTeam(firsts,  "K"), away: getTeam(seconds, "L") }, // R32-9:  1K vs 2L
+      { home: getTeam(firsts,  "H"), away: getTeam(seconds, "J") }, // R32-10: 1H vs 2J
+      { home: getTeam(firsts,  "B"), away: getThirdFromGroup("J") }, // R32-11: 1B vs 3J
+      { home: getTeam(seconds, "K"), away: getThirdFromGroup("L") }, // R32-12: 2K vs 3L
+      { home: getTeam(firsts,  "J"), away: getTeam(seconds, "H") }, // R32-13: 1J vs 2H
+      { home: getTeam(seconds, "D"), away: getTeam(seconds, "G") }, // R32-14: 2D vs 2G
+      { home: getTeam(firsts,  "D"), away: getThirdFromGroup("B") }, // R32-15: 1D vs 3B
+      { home: getTeam(firsts,  "G"), away: getThirdFromGroup("I") }, // R32-16: 1G vs 3I
     ];
 
     const hasAnyGroupScores = Object.values(groupMatches).some(group => 
@@ -2064,25 +2065,29 @@ export default function App() {
     }).slice(0, 8);
 
     const getTeam = (list, key) => list.find(t => t.group === key)?.id || null;
-    const getThirdByRank = (rank) => bestEightThirds[rank - 1]?.id || null;
+    const getThirdFromGroup = (g) => {
+      const inBest8 = bestEightThirds.some(b => b.group === g);
+      const t = thirds.find(x => x.group === g);
+      return (inBest8 && t) ? t.id : null;
+    };
 
     const r32Teams = [
-      { home: getTeam(firsts, "A"), away: getThirdByRank(1) },
-      { home: getTeam(seconds, "B"), away: getTeam(seconds, "C") },
-      { home: getTeam(firsts, "C"), away: getThirdByRank(2) },
-      { home: getTeam(seconds, "D"), away: getTeam(seconds, "E") },
-      { home: getTeam(firsts, "E"), away: getThirdByRank(3) },
-      { home: getTeam(seconds, "F"), away: getTeam(seconds, "G") },
-      { home: getTeam(firsts, "G"), away: getThirdByRank(4) },
-      { home: getTeam(seconds, "H"), away: getTeam(seconds, "I") },
-      { home: getTeam(firsts, "I"), away: getThirdByRank(5) },
-      { home: getTeam(seconds, "J"), away: getTeam(seconds, "K") },
-      { home: getTeam(firsts, "K"), away: getThirdByRank(6) },
-      { home: getTeam(seconds, "L"), away: getTeam(seconds, "A") },
-      { home: getTeam(firsts, "B"), away: getThirdByRank(7) },
-      { home: getTeam(firsts, "D"), away: getThirdByRank(8) },
-      { home: getTeam(firsts, "F"), away: getTeam(firsts, "H") },
-      { home: getTeam(firsts, "J"), away: getTeam(firsts, "L") }
+      { home: getTeam(firsts,  "E"), away: getThirdFromGroup("D") }, // R32-1:  1E vs 3D
+      { home: getTeam(firsts,  "I"), away: getThirdFromGroup("F") }, // R32-2:  1I vs 3F
+      { home: getTeam(seconds, "A"), away: getTeam(seconds, "B") }, // R32-3:  2A vs 2B
+      { home: getTeam(firsts,  "F"), away: getTeam(seconds, "C") }, // R32-4:  1F vs 2C
+      { home: getTeam(firsts,  "C"), away: getTeam(seconds, "F") }, // R32-5:  1C vs 2F
+      { home: getTeam(seconds, "E"), away: getTeam(seconds, "I") }, // R32-6:  2E vs 2I
+      { home: getTeam(firsts,  "A"), away: getThirdFromGroup("E") }, // R32-7:  1A vs 3E
+      { home: getTeam(firsts,  "L"), away: getThirdFromGroup("K") }, // R32-8:  1L vs 3K
+      { home: getTeam(firsts,  "K"), away: getTeam(seconds, "L") }, // R32-9:  1K vs 2L
+      { home: getTeam(firsts,  "H"), away: getTeam(seconds, "J") }, // R32-10: 1H vs 2J
+      { home: getTeam(firsts,  "B"), away: getThirdFromGroup("J") }, // R32-11: 1B vs 3J
+      { home: getTeam(seconds, "K"), away: getThirdFromGroup("L") }, // R32-12: 2K vs 3L
+      { home: getTeam(firsts,  "J"), away: getTeam(seconds, "H") }, // R32-13: 1J vs 2H
+      { home: getTeam(seconds, "D"), away: getTeam(seconds, "G") }, // R32-14: 2D vs 2G
+      { home: getTeam(firsts,  "D"), away: getThirdFromGroup("B") }, // R32-15: 1D vs 3B
+      { home: getTeam(firsts,  "G"), away: getThirdFromGroup("I") }, // R32-16: 1G vs 3I
     ];
 
     const shouldSimulate = isSimulationMode || forceSimulate;
