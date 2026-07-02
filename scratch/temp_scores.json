@@ -62,5 +62,44 @@
     ],
     "goalsAway": [],
     "cardsHome": [], "cardsAway": []
+  },
+  {
+    "id": "R32-8",
+    "scoreHome": 2, "scoreAway": 1,
+    "goalsHome": [
+      { "player": "Harry Kane", "minute": "75'" },
+      { "player": "Harry Kane", "minute": "86'" }
+    ],
+    "goalsAway": [
+      { "player": "Brian Cipenga", "minute": "7'" }
+    ],
+    "cardsHome": [], "cardsAway": []
+  },
+  {
+    "id": "R32-15",
+    "scoreHome": 2, "scoreAway": 0,
+    "goalsHome": [
+      { "player": "Folarin Balogun", "minute": "45'" },
+      { "player": "Malik Tillman", "minute": "82'" }
+    ],
+    "goalsAway": [],
+    "cardsHome": [
+      { "player": "Folarin Balogun", "minute": "63'", "type": "red" }
+    ],
+    "cardsAway": []
+  },
+  {
+    "id": "R32-16",
+    "scoreHome": 3, "scoreAway": 2,
+    "goalsHome": [
+      { "player": "Romelu Lukaku", "minute": "86'" },
+      { "player": "Youri Tielemans", "minute": "89'" },
+      { "player": "Youri Tielemans", "minute": "120+4' (pen)" }
+    ],
+    "goalsAway": [
+      { "player": "Habib Diarra", "minute": "24'" },
+      { "player": "Ismaïla Sarr", "minute": "51'" }
+    ],
+    "cardsHome": [], "cardsAway": []
   }
 ]
